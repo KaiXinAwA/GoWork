@@ -1,94 +1,65 @@
+import { Button } from "@/components/ui/button"
+import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
 
-export default function HomePage() {
+export default function Home() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-
-      <main className="flex-grow bg-white">
-        <div className="container mx-auto px-4 py-12">
-          <div className="mb-12 text-center">
-            <h1 className="text-3xl font-bold mb-4">
-              Find high-quality talent or open jobs with the help of AI tools that keep you in control.
+      <main className="flex-grow">
+        <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 md:p-24">
+          <div className="text-center space-y-6 max-w-3xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Welcome to <span className="text-primary">GoWork</span>
+              <span className="chinese block mt-2">欢迎来到 GoWork</span>
             </h1>
-            <p className="text-lg mb-8 max-w-2xl mx-auto">
-              Thousands of amazing opportunities are waiting for you—don't miss out!
+            <p className="text-xl text-muted-foreground">
+              A Simple Job Platform Connecting Job Seekers and Employers
+              <span className="chinese block mt-1">连接求职者和雇主的简单招聘平台</span>
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <div className="bg-blue-50 p-6 rounded-lg text-center">
-                <p className="font-medium">Stand out to top employers and land the job you deserve!</p>
-              </div>
-              <div className="bg-blue-50 p-6 rounded-lg text-center">
-                <p className="font-medium">Your dream job is just a click away—start your journey now!</p>
-              </div>
-              <div className="bg-blue-50 p-6 rounded-lg text-center">
-                <p className="font-medium">Find the perfect candidate with our powerful tools.</p>
-              </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+              <Link href="/jobs">
+                <Button size="lg" className="w-full sm:w-auto">
+                  Browse Jobs
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto">
+                  Go to Dashboard
+                </Button>
+              </Link>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-white p-8 border rounded-lg shadow-sm">
-              <h2 className="text-xl font-bold mb-4">For Job Seekers</h2>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Create a professional profile that stands out</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Apply to jobs with just one click</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Filter jobs by location, salary, and type</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Get matched with positions that fit your skills</span>
-                </li>
-              </ul>
-              <Link
-                href="/login"
-                className="block text-center py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Find Jobs
-              </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-6xl mx-auto">
+            <div className="p-6 border rounded-lg bg-card">
+              <h3 className="text-lg font-semibold mb-2">Smart Matching</h3>
+              <p className="text-muted-foreground">
+                Automatically match the most suitable positions based on skills and experience
+                <span className="chinese block mt-1">基于技能和经验自动匹配最适合的职位</span>
+              </p>
             </div>
-
-            <div className="bg-white p-8 border rounded-lg shadow-sm">
-              <h2 className="text-xl font-bold mb-4">For Employers</h2>
-              <ul className="space-y-2 mb-6">
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Post job openings quickly and easily</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Review qualified applicants</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Build your company profile</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-500 mr-2">✓</span>
-                  <span>Connect with the best talent</span>
-                </li>
-              </ul>
-              <Link
-                href="/employer"
-                className="block text-center py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Post Jobs
-              </Link>
+            <div className="p-6 border rounded-lg bg-card">
+              <h3 className="text-lg font-semibold mb-2">Real-time Updates</h3>
+              <p className="text-muted-foreground">
+                Get timely notifications about application progress and new job postings
+                <span className="chinese block mt-1">及时获取申请进展和新职位发布提醒</span>
+              </p>
+            </div>
+            <div className="p-6 border rounded-lg bg-card">
+              <h3 className="text-lg font-semibold mb-2">User-Friendly</h3>
+              <p className="text-muted-foreground">
+                Clear interface design makes job searching and hiring effortless
+                <span className="chinese block mt-1">清晰的界面设计，让求职招聘变得轻松</span>
+              </p>
             </div>
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   )

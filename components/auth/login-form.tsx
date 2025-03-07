@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 
 const formSchema = z.object({
   email: z.string().email("无效的邮箱地址 / Invalid email address"),
@@ -24,6 +27,9 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
+  const { handleError } = useErrorHandler({
+    defaultMessage: '登录失败，请检查您的邮箱和密码'
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -42,29 +48,28 @@ export function LoginForm() {
         body: JSON.stringify(values),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || "登录失败 / Login failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "登录失败");
       }
 
-      // 保存token到localStorage以便前端使用
+      const data = await response.json();
+      
+      // 存储认证信息
       if (data.token) {
-        localStorage.setItem("authToken", data.token);
+        localStorage.setItem('authToken', data.token);
       }
-
-      toast.success("登录成功! / Login successful!");
-
+      
+      toast.success("登录成功！");
+      
       // 根据用户角色重定向
       if (data.role === "EMPLOYER") {
         router.push("/employer/dashboard");
       } else {
         router.push("/dashboard");
       }
-      router.refresh();
     } catch (error) {
-      console.error("登录错误 / Login error:", error);
-      toast.error(error instanceof Error ? error.message : "邮箱或密码错误 / Invalid email or password");
+      handleError(error);
     } finally {
       setIsLoading(false);
     }

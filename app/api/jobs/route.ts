@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { cookies } from 'next/headers';
+import { cookies } from 'next/headers';  // 添加正确的导入
 
-// Get all jobs
+// 获取所有职位
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -22,6 +22,12 @@ export async function GET(request: Request) {
             email: true,
           },
         },
+        category: {
+          select: {
+            id: true,
+            name: true,
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc',
@@ -35,11 +41,11 @@ export async function GET(request: Request) {
   }
 }
 
-// Create a new job (employer only)
+// 创建新职位
 export async function POST(request: Request) {
   try {
     const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');
+    const sessionCookie = cookieStore.get('session');  // 修复这一行，使用已导入的 cookies
     
     if (!sessionCookie) {
       return new NextResponse('Unauthorized', { status: 401 });
@@ -47,26 +53,29 @@ export async function POST(request: Request) {
     
     const userId = sessionCookie.value;
     
-    // Check if user is an employer
+    // 验证用户是否为雇主
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      select: { role: true }
     });
     
     if (!user || user.role !== 'EMPLOYER') {
-      return new NextResponse('Forbidden - Only employers can create jobs', {
-        status: 403,
-      });
+      return new NextResponse('Only employers can create jobs', { status: 403 });
     }
     
     const body = await request.json();
-    const { title, description, companyName, location, salary, requirements } = body;
+    const {
+      title,
+      description,
+      companyName,
+      location,
+      salary,
+      requirements,
+      type,
+      categoryId,
+    } = body;
     
-    // Validate required fields
-    if (!title || !description || !companyName || !location) {
-      return new NextResponse('Missing required fields', { status: 400 });
-    }
-    
-    // Create the job
+    // 创建职位
     const job = await prisma.job.create({
       data: {
         title,
@@ -75,7 +84,13 @@ export async function POST(request: Request) {
         location,
         salary,
         requirements,
-        employerId: userId,
+        type: type || "FULL_TIME",
+        employer: {
+          connect: { id: userId }
+        },
+        category: {
+          connect: { id: categoryId }
+        }
       },
     });
     
@@ -84,4 +99,9 @@ export async function POST(request: Request) {
     console.error('Error creating job:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-} 
+}
+
+// 删除这个未实现的函数
+// function cookies() {
+//   throw new Error('Function not implemented.');
+// }

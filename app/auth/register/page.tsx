@@ -2,24 +2,29 @@ import { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export const metadata: Metadata = {
-  title: "Register",
-  description: "Create your account",
+  title: "注册 / Register",
+  description: "创建您的账户 / Create your account",
 };
 
 export default function RegisterPage() {
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
-      <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-        <div className="flex flex-col space-y-2 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Create an account
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md space-y-4">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold">
+            Create an Account
+            <span className="chinese block mt-1">创建账户</span>
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Enter your email below to create your account
+          <p className="text-muted-foreground">
+            Enter your details below to create your account
+            <span className="chinese block mt-1">请填写以下信息创建您的账户</span>
           </p>
         </div>
-        <RegisterForm />
+        
+        <div className="bg-card p-8 rounded-lg shadow-sm border">
+          <RegisterForm />
+        </div>
       </div>
     </div>
   );
-} 
+}

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
-    // Get token from cookie
+    // 获取 cookie 中的令牌
     const token = request.headers.get("cookie")?.split("session=")?.[1];
 
     if (!token) {
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify token
+    // 验证令牌
     const decoded = verify(
       token,
       process.env.NEXTAUTH_SECRET || "fallback-secret"
@@ -33,35 +33,37 @@ export async function POST(request: Request) {
     const {
       title,
       type,
+      description,
+      companyName,
       location,
       salary,
-      description,
       requirements,
-      contactInfo,
+      categoryId, // 确保前端传入 categoryId
     } = body;
 
-    // Create job posting
+    // 创建职位
     const job = await prisma.job.create({
       data: {
         title,
-        type,
+        description,
+        companyName,
         location,
         salary,
-        description,
         requirements,
-        companyName: "Company Name", // Get from user profile
-        employerId: decoded.userId,
-        categoryId: "default", // You might want to make this dynamic
-        isActive: true,
+        type: type || "FULL_TIME", // 设置默认值
+        // 使用 connect 关联现有记录
+        employer: {
+          connect: { id: decoded.id } // 使用当前用户 ID
+        },
+        category: {
+          connect: { id: categoryId } // 使用传入的分类 ID
+        }
       },
     });
 
-    return NextResponse.json(job, { status: 201 });
+    return NextResponse.json(job);
   } catch (error) {
-    console.error("Job creation error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("Error creating job:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
-} 
+}

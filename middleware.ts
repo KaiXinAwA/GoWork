@@ -16,6 +16,20 @@ const publicPaths = [
 // Paths that require employer role
 const employerPaths = ['/employer'];
 
+// 获取允许的域名列表
+const getAllowedOrigins = () => {
+  // 在开发环境中允许本地测试
+  if (process.env.NODE_ENV !== 'production') {
+    return ['http://localhost:3000', 'http://localhost:3001'];
+  }
+  
+  // 在生产环境中只允许特定域名
+  return [
+    'https://gowork.example.com',
+    'https://www.gowork.example.com'
+  ];
+};
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get('session');
@@ -82,16 +96,31 @@ export async function middleware(request: NextRequest) {
     }
   }
   
-  return NextResponse.next();
+  // 获取响应
+  // Get response
+  const response = NextResponse.next();
+  
+  // 处理 CORS
+  const origin = request.headers.get('origin');
+  const allowedOrigins = getAllowedOrigins();
+  
+  // 如果请求来自允许的域名，设置相应的 CORS 头
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  
+  return response;
 }
 
+// 配置需要应用中间件的路径
+// Configure paths where middleware should be applied
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - api routes
-     * - static files (/_next, /images, etc.)
-     */
-    '/((?!_next/static|_next/image|images|api|favicon.ico|.*\\.).*)',
+    // 匹配所有路径
+    // Match all paths
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
-}; 
+};

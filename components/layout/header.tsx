@@ -3,71 +3,76 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
+import { useTheme } from "next-themes"
+import { Moon, Sun } from "lucide-react"
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth()
+  const { theme, setTheme } = useTheme()
 
-  const handleLogout = async () => {
-    await logout();
-  };
+  // 主题切换函数
+  // Theme toggle function
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
 
   return (
-    <header className="bg-white py-4 shadow-sm">
-      <div className="container mx-auto flex items-center justify-between px-4">
-        <Link href="/" className="font-bold text-primary text-2xl">
+    <header className="border-b">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="font-bold text-2xl">
           GoWork
         </Link>
-        <div className="flex items-center gap-2">
+
+        {/* Navigation */}
+        <nav className="hidden md:flex items-center space-x-6">
+          <Link href="/jobs" className="text-muted-foreground hover:text-foreground">
+            职位列表
+          </Link>
+          <Link href="/companies" className="text-muted-foreground hover:text-foreground">
+            公司
+          </Link>
+          {user && (
+            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
+              控制台
+            </Link>
+          )}
+        </nav>
+
+        {/* Actions */}
+        <div className="flex items-center space-x-4">
+          {/* 主题切换按钮 */}
+          {/* Theme toggle button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="relative h-10 w-10"
+          >
+            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">切换主题</span>
+          </Button>
+
           {user ? (
-            <>
-              <Link href="/profile">
-                <Button variant="ghost" size="sm">
-                  {user.name}'s Profile
-                </Button>
-              </Link>
-              
-              {user.role === 'EMPLOYER' && (
-                <Link href="/employer">
-                  <Button variant="ghost" size="sm">
-                    Employer Dashboard
-                  </Button>
-                </Link>
-              )}
-              
-              <Link href="/jobs">
-                <Button variant="ghost" size="sm">
-                  Browse Jobs
-                </Button>
-              </Link>
-              
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                Logout
+            <Link href="/profile">
+              <Button variant="outline" size="sm">
+                个人中心
               </Button>
-            </>
+            </Link>
           ) : (
-            <>
+            <div className="space-x-2">
               <Link href="/login">
-                <Button variant="ghost" size="sm">
-                  Login
+                <Button variant="outline" size="sm">
+                  登录
                 </Button>
               </Link>
               <Link href="/register">
-                <Button variant="ghost" size="sm">
-                  Register
+                <Button size="sm">
+                  注册
                 </Button>
               </Link>
-              <div className="w-px h-6 bg-gray-300"></div>
-              <Link href="/about">
-                <Button variant="ghost" size="sm">
-                  About Us
-                </Button>
-              </Link>
-              <Link href="/jobs">
-                <Button variant="ghost" size="sm">
-                  Browse Jobs
-                </Button>
-              </Link>
-            </>
+            </div>
           )}
         </div>
       </div>

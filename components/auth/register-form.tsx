@@ -20,21 +20,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  name: z.string().min(1, "姓名是必填项"),
+  email: z.string().email("无效的邮箱地址"),
+  password: z.string().min(8, "密码至少需要8个字符"),
+  confirmPassword: z.string().min(8, "确认密码至少需要8个字符"),
   role: z.enum(["JOBSEEKER", "EMPLOYER"]),
   companyName: z.string().optional(),
   companyDescription: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "密码和确认密码不匹配",
+  path: ["confirmPassword"],
 });
 
 export function RegisterForm() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const { handleError } = useErrorHandler({
+    defaultMessage: '注册失败，请稍后重试'
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
+      confirmPassword: "",
       role: "JOBSEEKER",
     },
   });
@@ -43,21 +58,32 @@ export function RegisterForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      setIsLoading(true);
+      
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role,
+          companyName: values.companyName,
+          companyDescription: values.companyDescription,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Registration failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "注册失败");
       }
 
-      toast.success("Registration successful! Please log in.");
-      // Redirect to login page
-      window.location.href = "/auth/login";
+      toast.success("注册成功！请登录");
+      router.push("/auth/login");
     } catch (error) {
-      toast.error("Registration failed. Please try again.");
+      handleError(error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -157,4 +183,4 @@ export function RegisterForm() {
       </form>
     </Form>
   );
-} 
+}

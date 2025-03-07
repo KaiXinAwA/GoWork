@@ -1,0 +1,6 @@
+/* 定义字体家族
+ * Define font family
+ */
+.font-inter {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+} 
