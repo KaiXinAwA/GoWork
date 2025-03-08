@@ -1,107 +1,125 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { cookies } from 'next/headers';  // 添加正确的导入
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
-// 获取所有职位
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const title = searchParams.get('title');
-    const location = searchParams.get('location');
-    
     const jobs = await prisma.job.findMany({
-      where: {
-        ...(title ? { title: { contains: title } } : {}),
-        ...(location ? { location: { contains: location } } : {}),
-      },
       include: {
-        employer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-        category: {
-          select: {
-            id: true,
-            name: true,
-          }
-        }
+        employer: true,
+        category: true,
+        skills: true,
+        applications: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    })
     
-    return NextResponse.json(jobs);
+    return NextResponse.json(jobs)
   } catch (error) {
-    console.error('Error fetching jobs:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Error fetching jobs:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch jobs' },
+      { status: 500 }
+    )
   }
 }
 
-// 创建新职位
 export async function POST(request: Request) {
   try {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');  // 修复这一行，使用已导入的 cookies
-    
-    if (!sessionCookie) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    const session = await getServerSession()
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-    
-    const userId = sessionCookie.value;
-    
-    // 验证用户是否为雇主
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true }
-    });
-    
-    if (!user || user.role !== 'EMPLOYER') {
-      return new NextResponse('Only employers can create jobs', { status: 403 });
+
+    if (session.user?.role !== 'EMPLOYER') {
+      return NextResponse.json(
+        { error: 'Only employers can create jobs' },
+        { status: 403 }
+      )
     }
+
+    const data = await request.json()
     
-    const body = await request.json();
-    const {
-      title,
-      description,
-      companyName,
-      location,
-      salary,
-      requirements,
-      type,
-      categoryId,
-    } = body;
+    // 验证必需字段
+    const requiredFields = ['title', 'companyName', 'location', 'description', 'categoryId'] as const
+    const missingFields = requiredFields.filter(field => !data[field])
     
-    // 创建职位
+    if (missingFields.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Missing required fields',
+          missingFields 
+        },
+        { status: 400 }
+      )
+    }
+
+    // 验证字段类型
+    if (data.type && !['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'FREELANCE'].includes(data.type)) {
+      return NextResponse.json(
+        { error: 'Invalid job type' },
+        { status: 400 }
+      )
+    }
+
+    // 验证过期时间
+    if (data.expiresAt && new Date(data.expiresAt) <= new Date()) {
+      return NextResponse.json(
+        { error: 'Expiration date must be in the future' },
+        { status: 400 }
+      )
+    }
+
     const job = await prisma.job.create({
       data: {
-        title,
-        description,
-        companyName,
-        location,
-        salary,
-        requirements,
-        type: type || "FULL_TIME",
-        employer: {
-          connect: { id: userId }
-        },
-        category: {
-          connect: { id: categoryId }
-        }
+        title: data.title,
+        companyName: data.companyName,
+        location: data.location,
+        description: data.description,
+        requirements: data.requirements,
+        salary: data.salary,
+        type: data.type || 'FULL_TIME',
+        experienceLevel: data.experienceLevel,
+        employerId: session.user.id,
+        categoryId: data.categoryId,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        isActive: true,
       },
-    });
-    
-    return NextResponse.json(job);
-  } catch (error) {
-    console.error('Error creating job:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
-  }
-}
+      include: {
+        employer: true,
+        category: true,
+        skills: true,
+      }
+    })
 
-// 删除这个未实现的函数
-// function cookies() {
-//   throw new Error('Function not implemented.');
-// }
+    return NextResponse.json(job)
+  } catch (error) {
+    console.error('Error creating job:', error)
+    
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json(
+          { error: 'A job with this title already exists' },
+          { status: 409 }
+        )
+      }
+      if (error.code === 'P2003') {
+        return NextResponse.json(
+          { error: 'Invalid category or employer ID' },
+          { status: 400 }
+        )
+      }
+    }
+    
+    return NextResponse.json(
+      { error: 'Failed to create job' },
+      { status: 500 }
+    )
+  }
+} 

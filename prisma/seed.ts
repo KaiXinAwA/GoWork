@@ -1,5 +1,6 @@
 import { PrismaClient, UserRole, JobType, ApplicationStatus } from '@prisma/client';
 import { hashPassword } from '../lib/auth';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -171,18 +172,53 @@ async function main() {
     },
   });
 
-  // 创建测试账号
-  const testJobseeker = await prisma.user.create({
-    data: {
-      email: 'test@example.com',
-      name: 'Test User',
-      password: await hashPassword('password123'),
+  // Create test accounts
+  const hashedPassword = await bcrypt.hash('Password123!', 10);
+
+  // 1. Job Seeker Account
+  const jobSeeker = await prisma.user.upsert({
+    where: { email: 'jobseeker@example.com' },
+    update: {},
+    create: {
+      name: 'John Smith',
+      email: 'jobseeker@example.com',
+      password: hashedPassword,
       role: UserRole.JOBSEEKER,
-      bio: 'This is a test jobseeker account',
+      bio: 'Experienced software developer looking for new opportunities',
+      location: 'Sydney, Australia',
+      experience: 3,
     },
   });
 
-  console.log('Seed data created successfully');
+  // 2. Employer Account
+  const employerAccount = await prisma.user.upsert({
+    where: { email: 'employer@example.com' },
+    update: {},
+    create: {
+      name: 'Sarah Johnson',
+      email: 'employer@example.com',
+      password: hashedPassword,
+      role: UserRole.EMPLOYER,
+      bio: 'Tech company hiring manager',
+      location: 'Melbourne, Australia',
+    },
+  });
+
+  // 3. Admin Account
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@gowork.dev' },
+    update: {},
+    create: {
+      name: 'Admin User',
+      email: 'admin@gowork.dev',
+      password: hashedPassword,
+      role: UserRole.ADMIN,
+      bio: 'System administrator',
+      location: 'Sydney, Australia',
+    },
+  });
+
+  console.log({ jobSeeker, employerAccount, admin });
 }
 
 main()

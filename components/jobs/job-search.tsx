@@ -14,12 +14,10 @@ export function JobSearch() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 构建查询参数
     const params = new URLSearchParams();
-    if (keyword) params.append("title", keyword);
-    if (location) params.append("location", location);
+    if (keyword.trim()) params.append("title", keyword.trim());
+    if (location.trim()) params.append("location", location.trim());
     
-    // 使用查询参数导航到职位页面
     router.push(`/jobs?${params.toString()}`);
   };
 
@@ -29,7 +27,7 @@ export function JobSearch() {
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="职位名称或关键词 / Job title or keyword"
+            placeholder="Job title or keyword"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             className="pl-9"
@@ -38,7 +36,7 @@ export function JobSearch() {
         <div className="relative">
           <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="地点 / Location"
+            placeholder="Location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             className="pl-9"
@@ -46,7 +44,7 @@ export function JobSearch() {
         </div>
       </div>
       <Button type="submit" className="w-full md:w-auto">
-        搜索职位 / Search Jobs
+        Search Jobs
       </Button>
     </form>
   );

@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
-  title: "登录 / Login",
-  description: "登录到您的账户 / Login to your account",
+  title: "Login | GoWork",
+  description: "Login to your GoWork account",
 };
 
 export default function LoginPage() {
@@ -13,11 +13,9 @@ export default function LoginPage() {
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">
             Welcome Back
-            <span className="chinese block mt-1">欢迎回来</span>
           </h1>
           <p className="text-muted-foreground">
             Login to your account to continue
-            <span className="chinese block mt-1">登录您的账户以继续</span>
           </p>
         </div>
         

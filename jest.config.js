@@ -1,58 +1,69 @@
-/** @type {import('jest').Config} */
 module.exports = {
-  // 设置测试环境为jsdom，用于模拟浏览器环境
-  // Set test environment to jsdom to simulate browser environment
+  // 测试环境为 jsdom，模拟浏览器环境
+  // Test environment is jsdom, simulating browser environment
   testEnvironment: 'jsdom',
   
-  // 定义测试文件的匹配规则
-  // Define patterns to match test files
-  testMatch: [
-    "**/__tests__/**/*.ts?(x)",  // 匹配 __tests__ 目录下的所有测试文件
-    "**/?(*.)+(spec|test).ts?(x)" // 匹配以 .spec.ts(x) 或 .test.ts(x) 结尾的文件
-  ],
-  
-  // 配置测试覆盖率收集范围
-  // Configure test coverage collection scope
-  collectCoverageFrom: [
-    "**/*.{js,jsx,ts,tsx}",
-    "!**/*.d.ts",
-    "!**/node_modules/**",
-    "!**/.next/**",
-    "!**/coverage/**"
-  ],
-  
-  // 设置模块别名，与tsconfig.json保持一致
-  // Set module aliases to match tsconfig.json
+  // 模块名称映射，处理路径别名
+  // Module name mappings, handling path aliases
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1",
-    // 处理样式文件和静态资源
-    // Handle style files and static assets
-    "\\.(css|less|scss|sass)$": "identity-obj-proxy",
-    "\\.(jpg|jpeg|png|gif|webp|svg)$": "<rootDir>/__mocks__/fileMock.js"
+    '^@/(.*)$': '<rootDir>/$1',
+    '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
   },
   
-  // 在每个测试文件之前运行的设置文件
-  // Setup files to run before each test file
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  // 设置测试覆盖率收集
+  // Set up test coverage collection
+  collectCoverageFrom: [
+    '**/*.{js,jsx,ts,tsx}',
+    '!**/*.d.ts',
+    '!**/node_modules/**',
+    '!**/.next/**',
+    '!**/coverage/**',
+    '!jest.config.js',
+    '!next.config.mjs',
+  ],
   
-  // 配置转换器
-  // Configure transformers
+  // 设置测试文件匹配模式
+  // Set test file matching patterns
+  testMatch: [
+    '<rootDir>/**/__tests__/**/*.{js,jsx,ts,tsx}',
+    '<rootDir>/**/*.{spec,test}.{js,jsx,ts,tsx}',
+  ],
+  
+  // 设置需要转换的文件
+  // Set files that need transformation
   transform: {
-    "^.+\\.(ts|tsx)$": "babel-jest"
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
   },
   
-  // 配置覆盖率阈值
-  // Configure coverage thresholds
+  // 设置需要转换的模块
+  // Set modules that need transformation
+  transformIgnorePatterns: [
+    '/node_modules/',
+    '^.+\\.module\\.(css|sass|scss)$',
+  ],
+  
+  // 设置测试环境的设置文件
+  // Set up files for test environment
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+
+  // 设置测试环境变量
+  // Set test environment variables
+  testEnvironmentOptions: {
+    url: 'http://localhost:3000',
+  },
+
+  // 设置测试覆盖率阈值
+  // Set test coverage thresholds
   coverageThreshold: {
     global: {
-      branches: 60, // 降低初始阈值
-      functions: 70,
-      lines: 70,
-      statements: 70
-    }
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
   },
-  
-  // 测试超时设置（毫秒）
-  // Test timeout setting (in milliseconds)
-  testTimeout: 10000
-}
+
+  // 设置测试超时时间
+  // Set test timeout
+  testTimeout: 10000,
+} 

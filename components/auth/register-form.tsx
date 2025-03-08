@@ -22,17 +22,18 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(1, "姓名是必填项"),
-  email: z.string().email("无效的邮箱地址"),
-  password: z.string().min(8, "密码至少需要8个字符"),
-  confirmPassword: z.string().min(8, "确认密码至少需要8个字符"),
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters"),
   role: z.enum(["JOBSEEKER", "EMPLOYER"]),
   companyName: z.string().optional(),
   companyDescription: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "密码和确认密码不匹配",
+  message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
@@ -40,7 +41,7 @@ export function RegisterForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const { handleError } = useErrorHandler({
-    defaultMessage: '注册失败，请稍后重试'
+    defaultMessage: 'Registration failed. Please try again later.'
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -75,10 +76,10 @@ export function RegisterForm() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "注册失败");
+        throw new Error(errorData.message || "Registration failed");
       }
 
-      toast.success("注册成功！请登录");
+      toast.success("Registration successful! Please log in.");
       router.push("/auth/login");
     } catch (error) {
       handleError(error);
@@ -92,12 +93,29 @@ export function RegisterForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter your full name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="email"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your email" {...field} />
+                <Input 
+                  placeholder="Enter your email" 
+                  type="email"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -113,6 +131,23 @@ export function RegisterForm() {
                 <Input
                   type="password"
                   placeholder="Enter your password"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirm Password</FormLabel>
+              <FormControl>
+                <Input
+                  type="password"
+                  placeholder="Confirm your password"
                   {...field}
                 />
               </FormControl>
@@ -177,8 +212,15 @@ export function RegisterForm() {
             />
           </>
         )}
-        <Button type="submit" className="w-full">
-          Register
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Registering...</span>
+            </div>
+          ) : (
+            "Register"
+          )}
         </Button>
       </form>
     </Form>

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from "lucide-react";
 
 export default function RedirectToLogin() {
   const router = useRouter();
@@ -12,7 +13,10 @@ export default function RedirectToLogin() {
   
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p>正在重定向到登录页面... / Redirecting to login page...</p>
+      <div className="flex items-center gap-2">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <p>Redirecting to login page...</p>
+      </div>
     </div>
   );
 } 

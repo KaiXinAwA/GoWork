@@ -18,17 +18,18 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
-  email: z.string().email("无效的邮箱地址 / Invalid email address"),
-  password: z.string().min(6, "密码至少需要6个字符 / Password must be at least 6 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
   const { handleError } = useErrorHandler({
-    defaultMessage: '登录失败，请检查您的邮箱和密码'
+    defaultMessage: 'Login failed. Please check your email and password.'
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -50,19 +51,17 @@ export function LoginForm() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "登录失败");
+        throw new Error(errorData.message || "Login failed");
       }
 
       const data = await response.json();
       
-      // 存储认证信息
       if (data.token) {
         localStorage.setItem('authToken', data.token);
       }
       
-      toast.success("登录成功！");
+      toast.success("Successfully logged in!");
       
-      // 根据用户角色重定向
       if (data.role === "EMPLOYER") {
         router.push("/employer/dashboard");
       } else {
@@ -83,10 +82,10 @@ export function LoginForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>邮箱 / Email</FormLabel>
+              <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="请输入邮箱 / Enter your email" 
+                  placeholder="Enter your email" 
                   type="email"
                   disabled={isLoading}
                   {...field} 
@@ -101,11 +100,11 @@ export function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>密码 / Password</FormLabel>
+              <FormLabel>Password</FormLabel>
               <FormControl>
                 <Input
                   type="password"
-                  placeholder="请输入密码 / Enter your password"
+                  placeholder="Enter your password"
                   disabled={isLoading}
                   {...field}
                 />
@@ -120,13 +119,13 @@ export function LoginForm() {
             href="/auth/register" 
             className="text-blue-600 hover:underline"
           >
-            注册账号 / Create Account
+            Create Account
           </Link>
           <Link 
             href="/auth/forgot-password" 
             className="text-blue-600 hover:underline"
           >
-            忘记密码？/ Forgot Password?
+            Forgot Password?
           </Link>
         </div>
 
@@ -136,9 +135,12 @@ export function LoginForm() {
           disabled={isLoading}
         >
           {isLoading ? (
-            "登录中... / Logging in..."
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Logging in...</span>
+            </div>
           ) : (
-            "登录 / Login"
+            "Login"
           )}
         </Button>
       </form>

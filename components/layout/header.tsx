@@ -4,11 +4,19 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { useTheme } from "next-themes"
-import { Moon, Sun } from "lucide-react"
+import { Moon, Sun, Menu } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useSession } from "next-auth/react"
 
 export default function Header() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
+  const { data: session } = useSession()
 
   // 主题切换函数
   // Theme toggle function
@@ -16,63 +24,53 @@ export default function Header() {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
 
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'DEVELOPER'
+
   return (
-    <header className="border-b">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="font-bold text-2xl">
-          GoWork
-        </Link>
-
-        {/* Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/jobs" className="text-muted-foreground hover:text-foreground">
-            职位列表
+    <header className="w-full border-b">
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-6">
+          <Link href="/" className="text-2xl font-bold">
+            GoWork
           </Link>
-          <Link href="/companies" className="text-muted-foreground hover:text-foreground">
-            公司
-          </Link>
-          {user && (
-            <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
-              控制台
+          <nav className="flex items-center gap-4">
+            <Link href="/jobs" className="text-sm font-medium">
+              Jobs
             </Link>
-          )}
-        </nav>
-
-        {/* Actions */}
-        <div className="flex items-center space-x-4">
-          {/* 主题切换按钮 */}
-          {/* Theme toggle button */}
+            <Link href="/companies" className="text-sm font-medium">
+              Companies
+            </Link>
+            {session?.user?.role === "ADMIN" && (
+              <Link href="/dashboard" className="text-sm font-medium">
+                Dashboard
+              </Link>
+            )}
+          </nav>
+        </div>
+        <div className="flex items-center gap-4">
+          {/* Theme toggle button | 主题切换按钮 */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="relative h-10 w-10"
           >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">切换主题</span>
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
           </Button>
-
-          {user ? (
-            <Link href="/profile">
-              <Button variant="outline" size="sm">
-                个人中心
-              </Button>
-            </Link>
-          ) : (
-            <div className="space-x-2">
+          {!session ? (
+            <>
               <Link href="/login">
-                <Button variant="outline" size="sm">
-                  登录
-                </Button>
+                <Button variant="ghost">Login</Button>
               </Link>
               <Link href="/register">
-                <Button size="sm">
-                  注册
-                </Button>
+                <Button>Sign up</Button>
               </Link>
-            </div>
+            </>
+          ) : (
+            <Link href="/profile">
+              <Button variant="ghost">Profile</Button>
+            </Link>
           )}
         </div>
       </div>

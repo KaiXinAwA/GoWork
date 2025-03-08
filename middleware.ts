@@ -1,126 +1,140 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
-// Paths that don't require authentication
-const publicPaths = [
-  '/',
-  '/auth/login',
-  '/auth/register',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/about',
-  '/help',
-  '/jobs',
-];
-
-// Paths that require employer role
-const employerPaths = ['/employer'];
+// 定义路径配置
+// Define path configurations
+const pathConfig = {
+  public: [
+    '/',
+    '/auth/login',
+    '/auth/register',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+    '/about',
+    '/help',
+    '/jobs',
+    '/api/jobs',  // 允许公开访问职位列表 API
+  ],
+  employer: [
+    '/employer',
+    '/employer/jobs',
+    '/employer/applications',
+    '/api/jobs/create',
+    '/api/jobs/update',
+    '/api/jobs/delete',
+  ],
+  jobseeker: [
+    '/jobseeker',
+    '/jobseeker/applications',
+    '/jobseeker/saved-jobs',
+    '/api/applications',
+  ],
+  admin: [
+    '/admin',
+    '/admin/users',
+    '/admin/jobs',
+    '/admin/categories',
+  ],
+};
 
 // 获取允许的域名列表
+// Get allowed origins
 const getAllowedOrigins = () => {
   // 在开发环境中允许本地测试
+  // Allow local testing in development
   if (process.env.NODE_ENV !== 'production') {
     return ['http://localhost:3000', 'http://localhost:3001'];
   }
   
   // 在生产环境中只允许特定域名
+  // Only allow specific domains in production
   return [
     'https://gowork.example.com',
     'https://www.gowork.example.com'
   ];
 };
 
+// 检查路径是否匹配
+// Check if path matches pattern
+const matchPath = (pathname: string, patterns: string[]) => {
+  return patterns.some(pattern => 
+    pathname === pattern || 
+    pathname.startsWith(`${pattern}/`) ||
+    (pattern.includes('*') && new RegExp(pattern.replace('*', '.*')).test(pathname))
+  );
+};
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sessionCookie = request.cookies.get('session');
   
-  // Check if the user is trying to access a protected route
-  const isPublicPath = publicPaths.some(path => 
-    pathname === path || pathname.startsWith(`${path}/`)
-  );
+  // 处理 CORS
+  // Handle CORS
+  if (request.method === 'OPTIONS') {
+    const origin = request.headers.get('origin') || '';
+    if (getAllowedOrigins().includes(origin)) {
+      return new NextResponse(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+  }
+
+  // 检查是否是公开路径
+  // Check if it's a public path
+  if (matchPath(pathname, pathConfig.public)) {
+    return NextResponse.next();
+  }
+
+  // 获取用户 token
+  // Get user token
+  const token = await getToken({ req: request });
+
+  // 如果没有 token，重定向到登录页
+  // If no token, redirect to login
+  if (!token) {
+    const response = NextResponse.redirect(new URL('/auth/login', request.url));
+    return response;
+  }
+
+  // 根据用户角色检查权限
+  // Check permissions based on user role
+  const userRole = token.role as string;
   
-  // If it's a public path, allow access
-  if (isPublicPath) {
+  if (userRole === 'EMPLOYER' && matchPath(pathname, pathConfig.employer)) {
     return NextResponse.next();
   }
   
-  // If no session cookie, redirect to login
-  if (!sessionCookie) {
-    const response = NextResponse.redirect(new URL('/auth/login', request.url));
-    response.cookies.set({
-      name: 'redirect',
-      value: pathname,
-      path: '/',
-    });
-    return response;
+  if (userRole === 'JOBSEEKER' && matchPath(pathname, pathConfig.jobseeker)) {
+    return NextResponse.next();
   }
   
-  // Special handling for employer paths
-  const isEmployerPath = employerPaths.some(path => 
-    pathname === path || pathname.startsWith(`${path}/`)
-  );
-  
-  if (isEmployerPath) {
-    try {
-      // Get the base URL from the request
-      const baseUrl = request.headers.get('x-forwarded-proto')
-        ? `${request.headers.get('x-forwarded-proto')}://${request.headers.get('x-forwarded-host')}`
-        : request.url;
-      
-      // Fetch the user from the API to check their role
-      const userResponse = await fetch(new URL('/api/auth/me', baseUrl), {
-        headers: {
-          Cookie: `session=${sessionCookie.value}`,
-        },
-      });
-      
-      if (!userResponse.ok) {
-        throw new Error('Failed to fetch user');
-      }
-      
-      const user = await userResponse.json();
-      
-      // If the user is not an employer, redirect to the home page
-      if (user.role !== 'EMPLOYER') {
-        return NextResponse.redirect(new URL('/', baseUrl));
-      }
-    } catch (error) {
-      // In case of error, redirect to login
-      const response = NextResponse.redirect(new URL('/auth/login', request.url));
-      response.cookies.set({
-        name: 'redirect',
-        value: pathname,
-        path: '/',
-      });
-      return response;
-    }
+  if (userRole === 'ADMIN' && matchPath(pathname, pathConfig.admin)) {
+    return NextResponse.next();
   }
-  
-  // 获取响应
-  // Get response
-  const response = NextResponse.next();
-  
-  // 处理 CORS
-  const origin = request.headers.get('origin');
-  const allowedOrigins = getAllowedOrigins();
-  
-  // 如果请求来自允许的域名，设置相应的 CORS 头
-  if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  }
-  
-  return response;
+
+  // 如果没有权限，重定向到首页
+  // If no permission, redirect to home
+  return NextResponse.redirect(new URL('/', request.url));
 }
 
-// 配置需要应用中间件的路径
-// Configure paths where middleware should be applied
+// 配置中间件匹配路径
+// Configure middleware matching paths
 export const config = {
   matcher: [
-    // 匹配所有路径
-    // Match all paths
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    /*
+     * 匹配所有路径除了:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public (public files)
+     */
+    '/((?!api/|_next/static|_next/image|favicon.ico|public/).*)',
   ],
 };
