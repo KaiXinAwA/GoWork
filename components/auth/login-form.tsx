@@ -17,9 +17,10 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useErrorHandler } from "@/hooks/use-error-handler";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
+// Define form validation schema
 const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -28,9 +29,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
-  const { handleError } = useErrorHandler({
-    defaultMessage: 'Login failed. Please check your email and password.'
-  });
+  const { login } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,32 +42,27 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Login failed");
-      }
-
-      const data = await response.json();
       
-      if (data.token) {
-        localStorage.setItem('authToken', data.token);
-      }
+      // Use the login function from auth context
+      const userData = await login(values.email, values.password);
+      console.log("Login successful, user data:", userData);
       
-      toast.success("Successfully logged in!");
+      // Show success message
+      toast.success("Login successful!");
       
-      if (data.role === "EMPLOYER") {
-        router.push("/employer/dashboard");
+      // Redirect based on role
+      if (userData.role === "ADMIN") {
+        router.push("/admin");
+      } else if (userData.role === "EMPLOYER") {
+        router.push("/employer");
+      } else if (userData.role === "JOBSEEKER") {
+        router.push("/dashboard");
       } else {
         router.push("/dashboard");
       }
     } catch (error) {
-      handleError(error);
+      console.error("Login error:", error);
+      toast.error(error instanceof Error ? error.message : "Login failed, please try again later");
     } finally {
       setIsLoading(false);
     }
@@ -114,16 +108,10 @@ export function LoginForm() {
           )}
         />
 
-        <div className="flex items-center justify-between text-sm">
-          <Link 
-            href="/auth/register" 
-            className="text-blue-600 hover:underline"
-          >
-            Create Account
-          </Link>
+        <div className="flex items-center justify-end text-sm">
           <Link 
             href="/auth/forgot-password" 
-            className="text-blue-600 hover:underline"
+            className="text-primary hover:underline"
           >
             Forgot Password?
           </Link>

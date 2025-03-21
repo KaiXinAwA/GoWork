@@ -7,25 +7,19 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // 开发工具配置
   // Development tools configuration
   eslint: {
-    dirs: ['app', 'components', 'lib', 'hooks'], // 只在这些目录中运行 ESLint
-  },
-  typescript: {
-    tsconfigPath: './tsconfig.json', // 使用自定义的 TypeScript 配置
+    dirs: ['app', 'components', 'lib', 'hooks'], // ESLint directories
   },
 
-  // 图片优化配置
   // Image optimization configuration
   images: {
-    domains: ['gowork.example.com'], // 允许的图片域名
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // 响应式图片尺寸
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // 图片尺寸
-    formats: ['image/webp'], // 使用 WebP 格式
+    domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    formats: ['image/webp'],
   },
 
-  // 构建优化
   // Build optimization
   swcMinify: true,
   compiler: {
@@ -34,15 +28,7 @@ const nextConfig = {
       : false,
   },
 
-  // 实验性功能
-  // Experimental features
-  experimental: {
-    serverActions: true, // 启用服务器操作
-    typedRoutes: true, // 启用类型安全的路由
-  },
-
-  // 安全配置
-  // Security configuration
+  // Security headers
   async headers() {
     return [
       {
@@ -78,11 +64,10 @@ const nextConfig = {
           }
         ]
       }
-    ];
+    ]
   },
 
-  // 重定向配置
-  // Redirect configuration
+  // Redirects
   async redirects() {
     return [
       {
@@ -95,43 +80,35 @@ const nextConfig = {
         destination: '/jobs',
         permanent: true,
       }
-    ];
+    ]
   },
 
-  // 路由重写配置
-  // Rewrite configuration
+  // API routes
   async rewrites() {
     return {
       beforeFiles: [
-        // API 路由重写
         {
           source: '/api/v1/:path*',
           destination: '/api/:path*',
         }
       ],
       afterFiles: [
-        // 静态文件路由重写
         {
           source: '/assets/:path*',
           destination: '/public/assets/:path*',
         }
       ]
-    };
+    }
   },
 
-  // 环境变量配置
-  // Environment variables configuration
+  // Environment variables
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
 
-  // 输出配置
-  // Output configuration
+  // Output and optimization
   output: 'standalone',
-
-  // 性能优化
-  // Performance optimization
   poweredByHeader: false,
   compress: true,
   generateEtags: true,

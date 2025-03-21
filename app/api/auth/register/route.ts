@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, password, role, companyName, companyDescription } = body;
+    const { name, email, password, role, companyName, companyDescription } = body;
+    
+    // Basic validation
+    if (!email || !password || !role) {
+      return NextResponse.json(
+        { error: 'Missing required information', message: 'Email, password, and role are required' },
+        { status: 400 }
+      );
+    }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -16,7 +22,7 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'User already exists' },
+        { error: 'User already exists', message: 'This email is already registered' },
         { status: 400 }
       );
     }
@@ -29,20 +35,34 @@ export async function POST(request: Request) {
       data: {
         email,
         password: hashedPassword,
-        role: role as 'JOBSEEKER' | 'EMPLOYER',
-        name: companyName || email.split('@')[0], // Use company name or email prefix as name
-        bio: companyDescription,
+        role: role as 'ADMIN' | 'JOBSEEKER' | 'EMPLOYER',
+        name: name || (companyName || email.split('@')[0]), // Use provided name, company name, or email prefix as name
+        bio: companyDescription || '',
       },
     });
 
+    // Return success response without password
     return NextResponse.json(
-      { message: 'User created successfully' },
+      { 
+        message: 'User created successfully', 
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
+        }
+      },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error('Registration error:', error);
+    
+    // Provide more detailed error information
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        message: error.message || 'An error occurred during registration, please try again later'
+      },
       { status: 500 }
     );
   }

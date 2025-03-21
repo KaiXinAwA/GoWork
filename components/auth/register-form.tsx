@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { Loader2 } from "lucide-react";
 
+// Define form validation schema
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
@@ -35,7 +36,16 @@ const formSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
-});
+}).refine(
+  (data) => {
+    // Company name is required for employers
+    return data.role !== "EMPLOYER" || (data.companyName && data.companyName.trim() !== "");
+  },
+  {
+    message: "Company name is required for employers",
+    path: ["companyName"],
+  }
+);
 
 export function RegisterForm() {
   const router = useRouter();
@@ -52,6 +62,8 @@ export function RegisterForm() {
       password: "",
       confirmPassword: "",
       role: "JOBSEEKER",
+      companyName: "",
+      companyDescription: "",
     },
   });
 
@@ -61,6 +73,7 @@ export function RegisterForm() {
     try {
       setIsLoading(true);
       
+      // Send registration request
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,14 +87,25 @@ export function RegisterForm() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Registration failed");
+        // Handle server-side errors
+        const errorMessage = data.message || data.error || "Registration failed";
+        throw new Error(errorMessage);
       }
 
-      toast.success("Registration successful! Please log in.");
-      router.push("/auth/login");
+      // Registration successful
+      toast.success("Registration successful! Please log in.", {
+        description: "You have successfully created your account and can now log in."
+      });
+      
+      // Delay redirect slightly to show the success message
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 1500);
     } catch (error) {
+      console.error("Registration error:", error);
       handleError(error);
     } finally {
       setIsLoading(false);
@@ -162,7 +186,14 @@ export function RegisterForm() {
             <FormItem>
               <FormLabel>I am a</FormLabel>
               <Select
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  // Clear company fields when switching to jobseeker
+                  if (value === "JOBSEEKER") {
+                    form.setValue("companyName", "");
+                    form.setValue("companyDescription", "");
+                  }
+                }}
                 defaultValue={field.value}
               >
                 <FormControl>

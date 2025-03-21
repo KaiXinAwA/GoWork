@@ -95,8 +95,14 @@
   }
 }
 
-/* Custom utilities */
+/* 自定义工具类 */
 .chinese {
   @apply text-sm text-muted-foreground font-normal;
+}
+
+/* 在适当位置添加以下代码 */
+* {
+  -webkit-user-select: auto; /* Safari 兼容性 */
+  user-select: auto;
 }
 

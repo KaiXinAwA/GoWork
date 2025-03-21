@@ -32,7 +32,7 @@ module.exports = {
   // 设置需要转换的文件
   // Set files that need transformation
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { configFile: './babel.config.test.js' }],
   },
   
   // 设置需要转换的模块
@@ -66,4 +66,4 @@ module.exports = {
   // 设置测试超时时间
   // Set test timeout
   testTimeout: 10000,
-} 
+}

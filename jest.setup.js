@@ -44,8 +44,10 @@ jest.mock('next-auth', () => ({
 // Mock next/server
 jest.mock('next/server', () => ({
   NextResponse: {
-    json: jest.fn((data) => ({
-      json: () => Promise.resolve(data),
+    json: jest.fn((data, options) => ({
+      status: options?.status || 200,
+      json: async () => data,
+      headers: new Map(),
     })),
     redirect: jest.fn(),
   },

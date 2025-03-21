@@ -9,6 +9,7 @@ type User = {
   profileImage?: string | null;
   bio?: string | null;
   role: string;
+  token?: string;
 };
 
 type AuthContextType = {
@@ -26,12 +27,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // 获取当前用户信息
   // Fetch current user information
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // 检查本地存储的token
         // Check token in local storage
         const token = localStorage.getItem('authToken');
         
@@ -50,12 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const userData = await response.json();
           setUser(userData);
         } else {
-          // 如果token无效，清除它
           // Clear token if invalid
           localStorage.removeItem('authToken');
         }
       } catch (error) {
-        console.error('Failed to fetch user:', error);
+        console.error('Failed to fetch user information:', error);
         localStorage.removeItem('authToken');
       } finally {
         setLoading(false);
@@ -64,84 +62,108 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     fetchUser();
   }, []);
-  // 修改login函数
+
+  // Login function
   const login = async (email: string, password: string): Promise<User> => {
+    try {
+      console.log("Attempting to login:", email);
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
+        credentials: 'include',
       });
-    
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to log in');
-      }
-    
-      const userData = await response.json();
       
-      // 保存token到localStorage以便前端使用
+      console.log("Login response status:", response.status);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Login failed, please check your network connection' }));
+        throw new Error(errorData.message || 'Login failed, please check your email and password');
+      }
+      
+      const userData = await response.json();
+      console.log("Login successful, user role:", userData.role);
+      
+      // Save token to localStorage
       if (userData.token) {
         localStorage.setItem('authToken', userData.token);
+        console.log('Token saved to localStorage');
+      } else {
+        console.warn('Warning: No token in server response');
       }
       
+      // Update user state
       setUser(userData);
+      
       return userData;
-    };
-  
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
+    }
+  };
+
+  // Register function
   const register = async (
     name: string,
     email: string,
     password: string,
     role: string = 'JOBSEEKER'
   ): Promise<User> => {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, email, password, role }),
-    });
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password, role }),
+      });
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(error || 'Failed to register');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Registration failed' }));
+        throw new Error(errorData.message || 'Registration failed, please try again later');
+      }
+
+      const userData = await response.json();
+      return userData.user;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
     }
-
-    const userData = await response.json();
-    return userData;
   };
-  // 统一的 logout 函数，同时处理 cookie 和 localStorage
+
+  // Logout function
   const logout = async (): Promise<void> => {
-    // 调用登出API以清除cookie
     try {
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
     } catch (error) {
-      console.error('登出API调用失败:', error);
+      console.error('Error during logout:', error);
     }
     
-    // 同时清除localStorage中的token
+    // Also clear token from localStorage
     localStorage.removeItem('authToken');
     
     setUser(null);
   };
-  // 统一的 refreshUser 函数，优先使用 cookie，回退到 localStorage
+
+  // Unified refreshUser function, prefers cookies, falls back to localStorage
   const refreshUser = async (): Promise<void> => {
     try {
-      // 先尝试使用cookie认证
+      // First try with cookie authentication
       const response = await fetch('/api/auth/me', {
-        credentials: 'include', // 确保发送cookies
+        credentials: 'include', // Ensure cookies are sent
       });
       
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
       } else {
-        // 如果cookie认证失败，尝试使用localStorage中的token
+        // If cookie auth fails, try with token from localStorage
         const token = localStorage.getItem('authToken');
         if (!token) {
           setUser(null);
@@ -163,11 +185,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('刷新用户信息失败:', error);
+      console.error('Failed to refresh user information:', error);
       localStorage.removeItem('authToken');
       setUser(null);
     }
   };
+
   return (
     <AuthContext.Provider
       value={{ user, loading, login, register, logout, refreshUser }}

@@ -2,6 +2,29 @@ import { render, screen, waitFor } from '@testing-library/react'
 import JobList from '../job-list'
 import { ThemeProvider } from '@/components/theme-provider'
 
+// Mock Response globally if not available in test environment
+if (typeof Response === 'undefined') {
+  global.Response = class Response {
+    status: number;
+    statusText: string;
+    headers: Record<string, string>;
+    body: any;
+    
+    constructor(body?: any, options?: any) {
+      this.body = body;
+      this.status = options?.status || 200;
+      this.statusText = options?.statusText || '';
+      this.headers = options?.headers || {};
+    }
+    
+    json() {
+      return Promise.resolve(JSON.parse(this.body));
+    }
+    
+    ok = true;
+  } as any;
+}
+
 // Mock fetch with proper type
 const mockFetch = jest.fn() as jest.MockedFunction<typeof fetch>
 global.fetch = mockFetch
@@ -22,10 +45,10 @@ describe('JobList Component', () => {
   })
 
   it('显示无职位信息 | shows no jobs message', async () => {
-    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify([]), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    }))
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve([])
+    } as Response)
 
     render(
       <ThemeProvider>
@@ -43,12 +66,15 @@ describe('JobList Component', () => {
       {
         id: 1,
         title: 'Software Engineer',
-        company: 'Tech Corp',
+        companyName: '',
         location: 'Sydney',
         type: 'Full-time',
         description: 'Job description',
         requirements: 'Job requirements',
-        createdAt: new Date().toISOString()
+        experienceLevel: null,
+        createdAt: new Date().toISOString(),
+        skills: [],
+        category: null
       },
       {
         id: '2',
@@ -65,10 +91,10 @@ describe('JobList Component', () => {
       }
     ]
 
-    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockJobs), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    }))
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve(mockJobs)
+    } as Response)
 
     render(
       <ThemeProvider>
@@ -76,14 +102,24 @@ describe('JobList Component', () => {
       </ThemeProvider>
     )
 
-    await waitFor(() => {
-      expect(screen.getAllByText('View Details')).toHaveLength(2)
-      expect(screen.getByText('Software Engineer')).toBeInTheDocument()
-      expect(screen.getByText('Product Manager')).toBeInTheDocument()
-      expect(screen.getByText('Tech Corp')).toBeInTheDocument()
-      expect(screen.getByText('Sydney')).toBeInTheDocument()
-      expect(screen.getByText('Melbourne')).toBeInTheDocument()
-    })
+    // 等待视图更新完成
+    await waitFor(() => screen.getAllByText('View Details'));
+    
+    // 检查公共元素
+    const buttons = screen.getAllByText('View Details');
+    expect(buttons).toHaveLength(2);
+    
+    // 检查第一个工作
+    expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+    expect(screen.getByText(/Sydney/)).toBeInTheDocument();
+    expect(screen.getByText('Job description')).toBeInTheDocument();
+    
+    // 检查第二个工作
+    expect(screen.getByText('Product Manager')).toBeInTheDocument();
+    expect(screen.getByText(/Tech Corp.*Melbourne/)).toBeInTheDocument();
+    expect(screen.getByText('90k-110k')).toBeInTheDocument();
+    expect(screen.getByText('Product Management')).toBeInTheDocument();
+    expect(screen.getByText('Technology')).toBeInTheDocument();
   })
 
   it('处理错误情况 | shows error message when loading fails', async () => {

@@ -4,17 +4,12 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { useTheme } from "next-themes"
-import { Moon, Sun, Menu } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Moon, Sun } from "lucide-react"
 import { useSession } from "next-auth/react"
 
 export default function Header() {
-  const { user, logout } = useAuth()
+  // 移除未使用的 user 变量
+  const { } = useAuth() 
   const { theme, setTheme } = useTheme()
   const { data: session } = useSession()
 
@@ -23,8 +18,6 @@ export default function Header() {
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
   }
-
-  const isAdmin = user?.role === 'ADMIN' || user?.role === 'DEVELOPER'
 
   return (
     <header className="w-full border-b">

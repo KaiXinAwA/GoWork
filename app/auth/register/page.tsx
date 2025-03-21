@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Register | GoWork",
@@ -21,6 +22,11 @@ export default function RegisterPage() {
         
         <div className="bg-card p-8 rounded-lg shadow-sm border">
           <RegisterForm />
+          <div className="mt-4 text-center text-sm">
+            <p className="text-muted-foreground">
+              Already have an account? <Link href="/auth/login" className="text-primary hover:underline">Login</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

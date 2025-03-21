@@ -1,6 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { verify, sign, SignOptions, Secret, JwtPayload } from 'jsonwebtoken';
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { verify, sign, SignOptions, Secret } from 'jsonwebtoken';
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import prisma from "./prisma";
@@ -80,7 +79,9 @@ export async function verifyToken(token: string): Promise<any> {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // 注释说明为什么移除了适配器
+  // 如果将来需要使用PrismaAdapter，需要导入并取消注释下面的行
+  // adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
   },

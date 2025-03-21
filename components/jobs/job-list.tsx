@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
+import * as React from "react";
 import { useEffect, useState } from "react";
 import { Job, User, Category, Skill } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Define job type with relationships
 interface JobWithRelations extends Job {
@@ -25,8 +27,8 @@ export default function JobList() {
     const fetchJobs = async () => {
       try {
         const response = await fetch("/api/jobs");
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response || !response.ok) {
+          throw new Error(`HTTP error! status: ${response?.status || 'Network error'}`);
         }
         const data = await response.json();
         setJobs(data);
@@ -43,14 +45,43 @@ export default function JobList() {
   }, []);
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div data-testid="loading-skeleton" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Card key={i} className="flex flex-col">
+            <CardHeader>
+              <Skeleton className="h-6 w-full" />
+              <div className="flex items-center gap-2 mt-2">
+                <Skeleton className="h-5 w-20" />
+                <Skeleton className="h-5 w-24" />
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-1/2" />
+                <div className="flex flex-wrap gap-1 mt-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+                <Skeleton className="h-16 w-full" />
+                <div className="flex justify-between items-center mt-4">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-9 w-28" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
   }
 
   if (error) {
     return <div className="text-center py-8 text-red-500">{error}</div>;
   }
 
-  if (jobs.length === 0) {
+  if (!jobs || jobs.length === 0) {
     return <div className="text-center py-8">No jobs found</div>;
   }
 
@@ -62,7 +93,9 @@ export default function JobList() {
             <CardTitle className="line-clamp-2">{job.title}</CardTitle>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="secondary">{job.type}</Badge>
-              <Badge variant="outline">{job.experienceLevel}</Badge>
+              {job.experienceLevel && (
+                <Badge variant="outline">{job.experienceLevel}</Badge>
+              )}
             </div>
           </CardHeader>
           <CardContent className="flex-1">
@@ -74,7 +107,7 @@ export default function JobList() {
                 <p className="text-sm font-medium">{job.salary}</p>
               )}
               <div className="flex flex-wrap gap-1 mt-2">
-                {job.skills.map((skill) => (
+                {job.skills && job.skills.length > 0 && job.skills.map((skill) => (
                   <Badge key={skill.id} variant="secondary" className="text-xs">
                     {skill.name}
                   </Badge>
@@ -84,7 +117,9 @@ export default function JobList() {
                 {job.description}
               </p>
               <div className="flex justify-between items-center mt-4">
-                <Badge>{job.category.name}</Badge>
+                {job.category && (
+                  <Badge>{job.category.name}</Badge>
+                )}
                 <Link href={`/jobs/${job.id}`}>
                   <Button variant="outline">View Details</Button>
                 </Link>
