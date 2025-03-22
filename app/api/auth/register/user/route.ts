@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -36,13 +36,24 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with initial resume record
     const user = await prisma.user.create({
       data: {
         username,
         email,
         password: hashedPassword,
-        role: 'USER'
+        role: 'JOBSEEKER',
+        resumes: {
+          create: {
+            filename: '',
+            filepath: '',
+            education: '',
+            language: ''
+          }
+        }
+      },
+      include: {
+        resumes: true
       }
     });
 

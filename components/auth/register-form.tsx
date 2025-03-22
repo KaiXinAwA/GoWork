@@ -119,9 +119,13 @@ export function RegisterForm() {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel htmlFor="username">Username</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your username" {...field} />
+                <Input 
+                  placeholder="Enter your username" 
+                  id="username"
+                  {...field} 
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -132,11 +136,12 @@ export function RegisterForm() {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel htmlFor="email">Email</FormLabel>
               <FormControl>
                 <Input 
                   placeholder="Enter your email" 
                   type="email"
+                  id="email"
                   {...field} 
                 />
               </FormControl>
@@ -149,11 +154,12 @@ export function RegisterForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel htmlFor="password">Password</FormLabel>
               <FormControl>
                 <Input
                   type="password"
                   placeholder="Enter your password"
+                  id="password"
                   {...field}
                 />
               </FormControl>
@@ -166,11 +172,12 @@ export function RegisterForm() {
           name="confirmPassword"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
+              <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
               <FormControl>
                 <Input
                   type="password"
                   placeholder="Confirm your password"
+                  id="confirmPassword"
                   {...field}
                 />
               </FormControl>

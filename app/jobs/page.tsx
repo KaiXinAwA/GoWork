@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { JobSearch } from "@/components/jobs/job-search";
-import { JobList } from "@/components/jobs/job-list";
+import JobList from "@/components/jobs/job-list";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {

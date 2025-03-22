@@ -22,11 +22,13 @@ export async function POST(request) {
     // Find user with the provided email
     const user = await prisma.user.findUnique({
       where: { email },
-      select: {
-        userid: true,
-        email: true,
-        username: true,
-        password: true,
+      include: {
+        resumes: {
+          orderBy: {
+            resumeid: 'desc'
+          },
+          take: 1
+        },
       },
     });
 
@@ -64,7 +66,7 @@ export async function POST(request) {
 
     // Create token for the user
     const token = createToken({
-      userid: user.userid,
+      userId: user.userid,
       email: user.email,
       username: user.username,
     });
@@ -83,10 +85,15 @@ export async function POST(request) {
     console.log('Cookie set successfully');
 
     // Return user data without the password
+    const latestResume = user.resumes[0];
     return NextResponse.json({
       userid: user.userid,
       email: user.email,
       username: user.username,
+      role: user.role,
+      resume: latestResume?.filename || null,
+      education: latestResume?.education || null,
+      language: latestResume?.language || null,
       token, // Include token in the response so it can be stored in localStorage as well
     });
   } catch (error) {

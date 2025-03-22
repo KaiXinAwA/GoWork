@@ -10,55 +10,64 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 interface UserProfile {
-  userid: string;
+  userid: number;
   username: string;
   email: string;
-  resume?: string;
-  education?: string;
-  language?: string;
+  resume: string | null;
+  education: string | null;
+  language: string | null;
 }
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
-
-    const fetchProfile = async () => {
+    const loadUserData = async () => {
       try {
-        const response = await fetch('/api/profile');
-        if (!response.ok) {
-          throw new Error('Failed to fetch profile');
-        }
-        const data = await response.json();
-        setProfile(data);
+        await refreshUser();
       } catch (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Failed to load user data:', error);
         toast.error('Failed to load profile data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
-  }, [user, router]);
+    loadUserData();
+  }, [refreshUser]);
 
-  if (!user) {
-    return null;
-  }
-
+  // Show loading state while fetching user data
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-grow bg-gray-50 flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If no user data after loading, show a message
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow bg-gray-50">
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+              <h1 className="text-xl font-bold mb-4">Profile</h1>
+              <p className="text-gray-600">Please log in to view your profile.</p>
+              <div className="mt-4">
+                <Link href="/auth/login">
+                  <Button variant="default">Go to Login</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -95,18 +104,18 @@ export default function ProfilePage() {
                 <div>
                   <div className="mb-6">
                     <p className="text-gray-500 text-sm">USERNAME</p>
-                    <p className="font-medium">{profile?.username || 'Not set'}</p>
+                    <p className="font-medium">{user.username || 'Not set'}</p>
                   </div>
                   <div className="mb-6">
                     <p className="text-gray-500 text-sm">EMAIL</p>
-                    <p className="font-medium">{profile?.email || 'Not set'}</p>
+                    <p className="font-medium">{user.email || 'Not set'}</p>
                   </div>
                 </div>
 
                 <div>
                   <div className="mb-6">
                     <p className="text-gray-500 text-sm">USER ID</p>
-                    <p className="font-medium">{profile?.userid || 'Not set'}</p>
+                    <p className="font-medium">{user.userid || 'Not set'}</p>
                   </div>
                 </div>
               </div>
@@ -114,10 +123,10 @@ export default function ProfilePage() {
               <div className="mb-6">
                 <p className="text-gray-500 text-sm">RESUME</p>
                 <div className="flex items-center mt-1">
-                  {profile?.resume ? (
+                  {user.resume ? (
                     <div className="flex items-center gap-2">
-                      <div className="bg-gray-100 px-3 py-1 rounded text-sm">{profile.resume}</div>
-                      <Link href={`/api/profile/resume/${profile.resume}`} target="_blank">
+                      <div className="bg-gray-100 px-3 py-1 rounded text-sm">{user.resume}</div>
+                      <Link href={`/api/profile/resume/${user.resume}`} target="_blank">
                         <Button variant="outline" size="sm">View</Button>
                       </Link>
                     </div>
@@ -129,12 +138,12 @@ export default function ProfilePage() {
 
               <div className="mb-6">
                 <p className="text-gray-500 text-sm">EDUCATION</p>
-                <p className="font-medium">{profile?.education || 'Not set'}</p>
+                <p className="font-medium">{user.education || 'No education information added yet'}</p>
               </div>
 
               <div className="mb-6">
                 <p className="text-gray-500 text-sm">LANGUAGE</p>
-                <p className="font-medium">{profile?.language || 'Not set'}</p>
+                <p className="font-medium">{user.language || 'No language information added yet'}</p>
               </div>
             </div>
           </div>

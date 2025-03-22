@@ -10,6 +10,9 @@ interface User {
   bio?: string | null;
   role: string;
   token?: string;
+  resume?: string | null;
+  education?: string | null;
+  language?: string | null;
 }
 
 type AuthContextType = {
@@ -31,14 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Check token in local storage
         const token = localStorage.getItem('authToken');
-        
         if (!token) {
+          console.log('No token found in localStorage');
           setLoading(false);
           return;
         }
 
+        console.log('Fetching user data with token');
         const response = await fetch('/api/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -47,14 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (response.ok) {
           const userData = await response.json();
+          console.log("Fetched user data:", userData);
           setUser(userData);
         } else {
-          // Clear token if invalid
+          console.log('Token verification failed, clearing token');
           localStorage.removeItem('authToken');
+          setUser(null);
         }
       } catch (error) {
         console.error('Failed to fetch user information:', error);
         localStorage.removeItem('authToken');
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -74,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-        credentials: 'include',
       });
       
       console.log("Login response status:", response.status);
@@ -85,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       const userData = await response.json();
-      console.log("Login successful, user role:", userData.role);
+      console.log("Login successful, user data:", userData);
       
       // Save token to localStorage
       if (userData.token) {
@@ -95,12 +100,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Warning: No token in server response');
       }
       
-      // Update user state
+      // Update user state with user data
       setUser(userData);
+      setLoading(false);
       
       return userData;
     } catch (error) {
       console.error("Login error:", error);
+      setUser(null);
+      setLoading(false);
       throw error;
     }
   };
@@ -136,52 +144,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout function
   const logout = async (): Promise<void> => {
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
     } catch (error) {
       console.error('Error during logout:', error);
     }
     
-    // Also clear token from localStorage
+    // Clear token from localStorage
     localStorage.removeItem('authToken');
     
     setUser(null);
   };
 
-  // Unified refreshUser function, prefers cookies, falls back to localStorage
+  // Refresh user data
   const refreshUser = async (): Promise<void> => {
     try {
-      // First try with cookie authentication
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
       const response = await fetch('/api/auth/me', {
-        credentials: 'include', // Ensure cookies are sent
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
       } else {
-        // If cookie auth fails, try with token from localStorage
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-          setUser(null);
-          return;
-        }
-  
-        const tokenResponse = await fetch('/api/auth/me', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (tokenResponse.ok) {
-          const userData = await tokenResponse.json();
-          setUser(userData);
-        } else {
-          localStorage.removeItem('authToken');
-          setUser(null);
-        }
+        localStorage.removeItem('authToken');
+        setUser(null);
       }
     } catch (error) {
       console.error('Failed to refresh user information:', error);

@@ -7,21 +7,13 @@ import { Prisma } from '@prisma/client';
 // Get current user profile
 export async function GET(request: Request) {
   try {
-    // Try to get user ID from session cookie first
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');
-    
     // Try to get token from Authorization header
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.split(' ')[1];
     
     let userId: number | undefined;
     
-    if (sessionCookie) {
-      // Get user ID from session cookie
-      const session = JSON.parse(sessionCookie.value);
-      userId = session.userId;
-    } else if (token) {
+    if (token) {
       // Verify token and get user ID
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { userId: number };
@@ -42,7 +34,7 @@ export async function GET(request: Request) {
     const user = await prisma.user.findUnique({
       where: {
         userid: userId,
-      } as Prisma.UserWhereUniqueInput,
+      },
       include: {
         resumes: {
           orderBy: {
@@ -50,7 +42,7 @@ export async function GET(request: Request) {
           },
           take: 1,
         },
-      } as Prisma.UserInclude,
+      },
     });
 
     if (!user) {
@@ -84,21 +76,13 @@ export async function GET(request: Request) {
 // Update user profile
 export async function PATCH(request: Request) {
   try {
-    // Try to get user ID from session cookie first
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');
-    
     // Try to get token from Authorization header
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.split(' ')[1];
     
     let userId: number | undefined;
     
-    if (sessionCookie) {
-      // Get user ID from session cookie
-      const session = JSON.parse(sessionCookie.value);
-      userId = session.userId;
-    } else if (token) {
+    if (token) {
       // Verify token and get user ID
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { userId: number };
@@ -130,7 +114,7 @@ export async function PATCH(request: Request) {
     const user = await prisma.user.update({
       where: {
         userid: userId,
-      } as Prisma.UserWhereUniqueInput,
+      },
       data: {
         username,
       },
@@ -141,7 +125,7 @@ export async function PATCH(request: Request) {
           },
           take: 1,
         },
-      } as Prisma.UserInclude,
+      },
     });
 
     // Update resume if education or language is provided
@@ -152,7 +136,7 @@ export async function PATCH(request: Request) {
         await prisma.resume.update({
           where: {
             resumeid: latestResume.resumeid,
-          } as Prisma.ResumeWhereUniqueInput,
+          },
           data: {
             education: education || latestResume.education,
             language: language || latestResume.language,
@@ -176,7 +160,7 @@ export async function PATCH(request: Request) {
     const updatedUser = await prisma.user.findUnique({
       where: {
         userid: userId,
-      } as Prisma.UserWhereUniqueInput,
+      },
       include: {
         resumes: {
           orderBy: {
@@ -184,7 +168,7 @@ export async function PATCH(request: Request) {
           },
           take: 1,
         },
-      } as Prisma.UserInclude,
+      },
     });
 
     if (!updatedUser) {

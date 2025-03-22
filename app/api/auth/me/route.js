@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma';
 import { headers } from 'next/headers';
+import JobList from "@/components/jobs/job-list";
 
 export async function GET() {
   try {
-    // 首先检查 Authorization header
     // First check Authorization header
     const headersList = headers();
     const authHeader = headersList.get('Authorization');
     
-    let token: string | undefined;
+    let token;
     
     if (authHeader?.startsWith('Bearer ')) {
       token = authHeader.substring(7);
     } else {
-      // 如果没有 Bearer token，尝试从 cookie 获取
       // If no Bearer token, try to get from cookie
       const cookieStore = cookies();
       const sessionCookie = cookieStore.get('session');
@@ -27,29 +26,40 @@ export async function GET() {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // 验证令牌
     // Verify token
     try {
-      const decoded = await verifyToken(token) as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || '');
       const userId = decoded.userId;
 
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          profileImage: true,
-          bio: true,
-          role: true,
+      const user = await prisma.user.findFirst({
+        where: {
+          userid: userId
         },
+        include: {
+          resumes: {
+            orderBy: {
+              resumeid: 'desc'
+            },
+            take: 1
+          }
+        }
       });
 
       if (!user) {
         return new NextResponse('User not found', { status: 401 });
       }
 
-      return NextResponse.json(user);
+      const latestResume = user.resumes[0];
+
+      return NextResponse.json({
+        userid: user.userid,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        resume: latestResume?.filename || null,
+        education: latestResume?.education || null,
+        language: latestResume?.language || null,
+      });
     } catch (tokenError) {
       console.error('Token verification error:', tokenError);
       return new NextResponse('Invalid or expired token', { status: 401 });
@@ -58,4 +68,4 @@ export async function GET() {
     console.error('Get user error:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
-}
+} 
