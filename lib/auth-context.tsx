@@ -2,21 +2,21 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type User = {
-  id: string;
-  name: string;
+interface User {
+  userid: number;
+  username: string;
   email: string;
   profileImage?: string | null;
   bio?: string | null;
   role: string;
   token?: string;
-};
+}
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (name: string, email: string, password: string, role?: string) => Promise<User>;
+  register: (username: string, email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
@@ -107,18 +107,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Register function
   const register = async (
-    name: string,
+    username: string,
     email: string,
     password: string,
-    role: string = 'JOBSEEKER'
   ): Promise<User> => {
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ username, email, password }),
       });
 
       if (!response.ok) {

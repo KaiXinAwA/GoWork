@@ -3,13 +3,16 @@ import prisma from '@/lib/prisma';
 import { cookies } from 'next/headers';
 import { comparePassword, createToken } from '@/lib/auth';
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log('Login attempt for email:', email);
+
     // Validate required fields
     if (!email || !password) {
+      console.log('Missing required fields:', { email: !!email, password: !!password });
       return NextResponse.json(
         { error: 'Invalid credentials', message: 'Email and password are required' },
         { status: 400 }
@@ -20,18 +23,23 @@ export async function POST(request: Request) {
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
-        id: true,
+        userid: true,
         email: true,
-        name: true,
+        username: true,
         password: true,
-        role: true,
-        profileImage: true,
-        bio: true,
       },
     });
 
+    console.log('User found:', user ? {
+      userid: user.userid,
+      email: user.email,
+      username: user.username,
+      hasPassword: !!user.password
+    } : 'No user found');
+
     // Return error if user does not exist
     if (!user) {
+      console.log('No user found with email:', email);
       return NextResponse.json(
         { error: 'Invalid credentials', message: 'User does not exist or password is incorrect' },
         { status: 401 }
@@ -40,7 +48,14 @@ export async function POST(request: Request) {
 
     // Verify password
     const isPasswordValid = await comparePassword(password, user.password);
+    console.log('Password validation:', {
+      providedPassword: !!password,
+      storedPasswordHash: !!user.password,
+      isValid: isPasswordValid
+    });
+
     if (!isPasswordValid) {
+      console.log('Invalid password for user:', email);
       return NextResponse.json(
         { error: 'Invalid credentials', message: 'User does not exist or password is incorrect' },
         { status: 401 }
@@ -49,35 +64,36 @@ export async function POST(request: Request) {
 
     // Create token for the user
     const token = createToken({
-      id: user.id,
+      userid: user.userid,
       email: user.email,
-      role: user.role,
+      username: user.username,
     });
+
+    console.log('Token created successfully for user:', email);
 
     // Set the token as an HTTP-only cookie
     const cookieStore = cookies();
-    cookieStore.set('token', token, {
+    cookieStore.set('session', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: '/',
     });
 
+    console.log('Cookie set successfully');
+
     // Return user data without the password
     return NextResponse.json({
-      id: user.id,
+      userid: user.userid,
       email: user.email,
-      name: user.name,
-      role: user.role,
-      profileImage: user.profileImage,
-      bio: user.bio,
+      username: user.username,
       token, // Include token in the response so it can be stored in localStorage as well
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
     return NextResponse.json(
-      { error: 'Internal server error', message: 'An unexpected error occurred' },
+      { error: 'Internal server error', message: error.message || 'An unexpected error occurred' },
       { status: 500 }
     );
   }
-}
+} 

@@ -1,43 +1,113 @@
 'use client';
 
-import Link from "next/link"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
-import React from "react";
-import { useErrorHandler } from "@/hooks/use-error-handler";
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useAuth } from "@/lib/auth-context"
+
+interface UserProfile {
+  userid: string;
+  username: string;
+  email: string;
+  resume?: string;
+  education?: string;
+  language?: string;
+}
 
 export default function UpdateProfilePage() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const { handleError } = useErrorHandler({
-    defaultMessage: '更新个人资料失败'
-  });
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/profile');
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile');
+        }
+        const data = await response.json();
+        setProfile(data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast.error('Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file type
+      if (file.type !== 'application/pdf' && !file.type.startsWith('image/')) {
+        toast.error('Please upload a PDF or image file');
+        return;
+      }
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size should be less than 5MB');
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      const formData = new FormData(e.target as HTMLFormElement);
+      const formData = new FormData(e.currentTarget);
+      
+      // If a new file is selected, append it to formData
+      if (selectedFile) {
+        formData.append('resume', selectedFile);
+      }
+
       const response = await fetch('/api/profile/update', {
         method: 'POST',
         body: formData,
       });
       
       if (!response.ok) {
-        throw new Error('更新个人资料失败');
+        throw new Error('Failed to update profile');
       }
       
-      toast.success('个人资料已更新');
+      toast.success('Profile updated successfully');
       router.push('/profile');
     } catch (error) {
-      handleError(error);
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -47,73 +117,81 @@ export default function UpdateProfilePage() {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow">
             <div className="p-6 border-b">
-              <h1 className="text-xl font-bold">Update User Profile</h1>
+              <h1 className="text-xl font-bold">Update Profile</h1>
             </div>
 
             <div className="p-6">
               <form className="space-y-6" onSubmit={handleSubmit}>
-                {/* 表单内容保持不变 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">UPDATE USERNAME</label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      defaultValue="KaiXin"
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      name="username"
+                      defaultValue={profile?.username}
+                      required
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium mb-2">UPDATE EMAIL</label>
-                    <input
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
                       type="email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      defaultValue="KaiXin3111@gmail.com"
+                      defaultValue={profile?.email}
+                      required
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">UPDATE RESUME</label>
+                <div className="space-y-2">
+                  <Label htmlFor="resume">Resume (PDF or Image)</Label>
                   <div className="flex items-center gap-2">
-                    <div className="bg-gray-100 px-3 py-2 rounded text-sm flex-grow">[resume.pdf]</div>
-                    <button type="button" className="px-3 py-2 bg-gray-200 rounded text-sm">
-                      Choose File
-                    </button>
+                    <Input
+                      id="resume"
+                      name="resume"
+                      type="file"
+                      accept=".pdf,image/*"
+                      onChange={handleFileChange}
+                    />
+                    {profile?.resume && (
+                      <div className="text-sm text-gray-500">
+                        Current: {profile.resume}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">UPDATE EDUCATION</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    defaultValue="University"
+                <div className="space-y-2">
+                  <Label htmlFor="education">Education</Label>
+                  <Input
+                    id="education"
+                    name="education"
+                    defaultValue={profile?.education}
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">UPDATE LANGUAGE</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    defaultValue="Chinese, English, Bahasa Melayu"
+                <div className="space-y-2">
+                  <Label htmlFor="language">Language</Label>
+                  <Input
+                    id="language"
+                    name="language"
+                    defaultValue={profile?.language}
                   />
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  <Link href="/profile">
-                    <button type="button" className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
-                      Cancel
-                    </button>
-                  </Link>
-                  <button 
-                    type="submit" 
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    disabled={isSubmitting}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.push('/profile')}
                   >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting ? 'Saving...' : 'Save Changes'}
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

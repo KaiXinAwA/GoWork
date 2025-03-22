@@ -1,13 +1,30 @@
-import { Metadata } from "next";
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from "@/components/auth/login-form";
 import Link from "next/link";
-
-export const metadata: Metadata = {
-  title: "Login | GoWork",
-  description: "Login to your GoWork account",
-};
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      // Redirect to home page if user is already logged in
+      router.push("/");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-4">

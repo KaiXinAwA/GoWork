@@ -1,65 +1,65 @@
 import { NextResponse } from "next/server";
 import { verify } from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prisma";
 
-export async function PUT(request: Request) {
+export async function PUT(request) {
   try {
-    // 从 cookie 获取令牌
+    // Get token from cookie
     const token = request.headers.get("cookie")?.split("session=")?.[1];
 
     if (!token) {
       return NextResponse.json(
-        { error: "未授权" },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    // 验证令牌
+    // Verify token
     const decoded = verify(
       token,
       process.env.NEXTAUTH_SECRET || "fallback-secret"
-    ) as any;
+    );
 
     const { oldPassword, newPassword } = await request.json();
 
-    // 获取用户
+    // Get user
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "用户不存在" },
+        { error: "User not found" },
         { status: 404 }
       );
     }
 
-    // 验证旧密码
+    // Verify old password
     const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: "旧密码不正确" },
+        { error: "Invalid old password" },
         { status: 400 }
       );
     }
 
-    // 哈希新密码
+    // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // 更新密码
+    // Update password
     await prisma.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
     });
 
-    return NextResponse.json({ message: "密码已成功更新" });
+    return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {
-    console.error("密码更新错误:", error);
+    console.error("Password update error:", error);
     return NextResponse.json(
-      { error: "内部服务器错误" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
-}
+} 

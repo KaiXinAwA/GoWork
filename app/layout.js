@@ -1,5 +1,3 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
 import { Toaster } from "@/components/ui/toaster"
 import Script from 'next/script'
 import { Inter } from 'next/font/google'
@@ -10,14 +8,14 @@ import "./fonts.css"
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const viewport: Viewport = {
+export const viewport = {
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
   userScalable: true,
 }
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "GoWork - 招聘网站",
   description: "连接求职者和雇主的简单招聘平台",
   generator: 'v0.dev',
@@ -36,11 +34,7 @@ export const metadata: Metadata = {
   ],
 }
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function RootLayout({ children }) {
   const session = await getServerSession()
 
   return (
@@ -66,4 +60,4 @@ export default async function RootLayout({
       </body>
     </html>
   )
-}
+} 

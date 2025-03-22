@@ -29,7 +29,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,22 +50,19 @@ export function LoginForm() {
       // Show success message
       toast.success("Login successful!");
       
-      // Redirect based on role
-      if (userData.role === "ADMIN") {
-        router.push("/admin");
-      } else if (userData.role === "EMPLOYER") {
-        router.push("/employer");
-      } else if (userData.role === "JOBSEEKER") {
-        router.push("/dashboard");
-      } else {
-        router.push("/dashboard");
-      }
+      // Redirect to home page
+      router.push("/");
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error instanceof Error ? error.message : "Login failed, please try again later");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // If user is already logged in, don't show the form
+  if (user) {
+    return null;
   }
 
   return (

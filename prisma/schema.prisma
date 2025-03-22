@@ -9,122 +9,88 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userid        Int       @id @default(autoincrement())
+  username      String    @db.VarChar(50)
+  password      String    @db.VarChar(255)
+  email         String    @db.VarChar(100) @unique
+  resetOTP      String?
+  resetOTPExpiry DateTime?
+  role          UserRole  @default(JOBSEEKER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  resumes       Resume[]
+  applications  Application[]
+  company       Company?
+}
+
+model Company {
+  companyid      Int     @id @default(autoincrement())
+  company_name   String  @db.VarChar(100)
+  email          String  @db.VarChar(100) @unique
+  contact_number String? @db.VarChar(20)
+  country_state  String? @db.VarChar(100)
+  address        String? @db.VarChar(255)
+  license        String? @db.VarChar(100)
+  license_status String? @db.VarChar(50)
+  company_photo  String? @db.VarChar(255)
+  userId         Int?    @unique
+  user           User?   @relation(fields: [userId], references: [userid])
+  jobs           Job[]
+}
+
+model Job {
+  jobid        Int     @id @default(autoincrement())
+  company      Company @relation(fields: [companyid], references: [companyid], onDelete: Cascade)
+  companyid    Int
+  position     String  @db.VarChar(100)
+  typesofwork  String? @db.VarChar(100)
+  salaryrange  String? @db.VarChar(50)
+  requirements String?
+  contactdetails String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  applications Application[]
+}
+
+model Resume {
+  resumeid   Int     @id @default(autoincrement())
+  user       User    @relation(fields: [userid], references: [userid], onDelete: Cascade)
+  userid     Int
+  filename   String  @db.VarChar(255)
+  filepath   String  @db.VarChar(255)
+  education  String?
+  language   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  applications Application[]
+}
+
+model Application {
+  applicationid   Int     @id @default(autoincrement())
+  user            User    @relation(fields: [userid], references: [userid], onDelete: Cascade)
+  userid          Int
+  job             Job     @relation(fields: [jobid], references: [jobid], onDelete: Cascade)
+  jobid           Int
+  resume          Resume? @relation(fields: [resumeid], references: [resumeid])
+  resumeid        Int?
+  status          ApplicationStatus @default(PENDING)
+  applicationdate DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 enum UserRole {
-  JOBSEEKER
-  EMPLOYER
   ADMIN
-}
-
-enum JobType {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  INTERNSHIP
-  FREELANCE
+  EMPLOYER
+  JOBSEEKER
 }
 
 enum ApplicationStatus {
   PENDING
-  REVIEWING
   ACCEPTED
   REJECTED
-  WITHDRAWN
-}
-
-model User {
-  id            String        @id @default(cuid())
-  name          String
-  email         String        @unique
-  password      String
-  profileImage  String?
-  bio           String?
-  role          UserRole      @default(JOBSEEKER)
-  phone         String?
-  location      String?
-  experience    Int?          // Years of experience
-  skills        Skill[]       // Many-to-many relation with skills
-  education     Education[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  jobs          Job[]         @relation("EmployerJobs")
-  applications  Application[] @relation("UserApplications")
-}
-
-model Job {
-  id             String        @id @default(cuid())
-  title          String
-  description    String
-  companyName    String
-  location       String
-  salary         String?
-  requirements   String?
-  type           JobType       @default(FULL_TIME)
-  experienceLevel String?      // e.g., "Entry Level", "Senior", etc.
-  employerId     String
-  employer       User          @relation("EmployerJobs", fields: [employerId], references: [id])
-  category       Category      @relation(fields: [categoryId], references: [id])
-  categoryId     String
-  skills         Skill[]       // Required skills for the job
-  applications   Application[] @relation("JobApplications")
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  expiresAt      DateTime?     // Job posting expiration date
-  isActive       Boolean       @default(true)
-
-  @@index([employerId])
-  @@index([categoryId])
-}
-
-model Application {
-  id          String            @id @default(cuid())
-  coverLetter String?
-  resume      String?
-  status      ApplicationStatus @default(PENDING)
-  userId      String
-  user        User              @relation("UserApplications", fields: [userId], references: [id])
-  jobId       String
-  job         Job               @relation("JobApplications", fields: [jobId], references: [id])
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  notes       String?           // Internal notes for employers
-
-  @@index([userId])
-  @@index([jobId])
-}
-
-model Category {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  jobs        Job[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Skill {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  users       User[]   // Users who have this skill
-  jobs        Job[]    // Jobs that require this skill
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Education {
-  id          String   @id @default(cuid())
-  institution String
-  degree      String
-  field       String
-  startDate   DateTime
-  endDate     DateTime?
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])
 }

@@ -2,8 +2,16 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 
-export async function POST(request: Request) {
+export async function POST(request) {
   try {
+    // Ensure the request is JSON
+    if (!request.headers.get('content-type')?.includes('application/json')) {
+      return NextResponse.json(
+        { error: 'Invalid content type', message: 'Content-Type must be application/json' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { name, email, password, role, companyName, companyDescription } = body;
     
@@ -11,6 +19,14 @@ export async function POST(request: Request) {
     if (!email || !password || !role) {
       return NextResponse.json(
         { error: 'Missing required information', message: 'Email, password, and role are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate role
+    if (!['JOBSEEKER', 'EMPLOYER'].includes(role)) {
+      return NextResponse.json(
+        { error: 'Invalid role', message: 'Role must be either JOBSEEKER or EMPLOYER' },
         { status: 400 }
       );
     }
@@ -35,8 +51,8 @@ export async function POST(request: Request) {
       data: {
         email,
         password: hashedPassword,
-        role: role as 'ADMIN' | 'JOBSEEKER' | 'EMPLOYER',
-        name: name || (companyName || email.split('@')[0]), // Use provided name, company name, or email prefix as name
+        role: role,
+        name: name || (companyName || email.split('@')[0]),
         bio: companyDescription || '',
       },
     });
@@ -49,19 +65,28 @@ export async function POST(request: Request) {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role
+          role: user.role,
         }
       },
       { status: 201 }
     );
-  } catch (error: any) {
+
+  } catch (error) {
     console.error('Registration error:', error);
     
-    // Provide more detailed error information
+    // Handle Prisma errors
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Database error', message: 'A user with this email already exists' },
+        { status: 400 }
+      );
+    }
+
+    // Handle other errors
     return NextResponse.json(
       { 
-        error: 'Internal server error', 
-        message: error.message || 'An error occurred during registration, please try again later'
+        error: 'Server error', 
+        message: 'An unexpected error occurred. Please try again later.' 
       },
       { status: 500 }
     );

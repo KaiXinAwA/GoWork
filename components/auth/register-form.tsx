@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,26 +28,14 @@ import { Loader2 } from "lucide-react";
 
 // Define form validation schema
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string().min(8, "Confirm password must be at least 8 characters"),
-  role: z.enum(["JOBSEEKER", "EMPLOYER"]),
-  companyName: z.string().optional(),
-  companyDescription: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
-}).refine(
-  (data) => {
-    // Company name is required for employers
-    return data.role !== "EMPLOYER" || (data.companyName && data.companyName.trim() !== "");
-  },
-  {
-    message: "Company name is required for employers",
-    path: ["companyName"],
-  }
-);
+});
 
 export function RegisterForm() {
   const router = useRouter();
@@ -57,37 +47,46 @@ export function RegisterForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
+      username: "",
       email: "",
       password: "",
       confirmPassword: "",
-      role: "JOBSEEKER",
-      companyName: "",
-      companyDescription: "",
     },
   });
-
-  const role = form.watch("role");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       setIsLoading(true);
       
-      // Send registration request
-      const response = await fetch("/api/auth/register", {
+      // Send registration request to the unified endpoint
+      const response = await fetch('/api/register', {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
-          name: values.name,
+          username: values.username,
           email: values.email,
           password: values.password,
-          role: values.role,
-          companyName: values.companyName,
-          companyDescription: values.companyDescription,
         }),
       });
 
-      const data = await response.json();
+      // Log the response status and headers for debugging
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      // Get the response text first to see what we're actually getting
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+        throw new Error('Server returned an invalid response. Please try again later.');
+      }
 
       if (!response.ok) {
         // Handle server-side errors
@@ -117,12 +116,12 @@ export function RegisterForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="name"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your full name" {...field} />
+                <Input placeholder="Enter your username" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -179,70 +178,6 @@ export function RegisterForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>I am a</FormLabel>
-              <Select
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  // Clear company fields when switching to jobseeker
-                  if (value === "JOBSEEKER") {
-                    form.setValue("companyName", "");
-                    form.setValue("companyDescription", "");
-                  }
-                }}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="JOBSEEKER">Job Seeker</SelectItem>
-                  <SelectItem value="EMPLOYER">Employer</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {role === "EMPLOYER" && (
-          <>
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter company name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="companyDescription"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Description</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Brief description of your company"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <div className="flex items-center gap-2">

@@ -9,7 +9,6 @@ export default function RegisterPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('JOBSEEKER');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -28,7 +27,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await register(username, email, password, userType);
+      await register(username, email, password);
       router.push('/');
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
@@ -83,31 +82,6 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  name="userType" 
-                  value="JOBSEEKER" 
-                  className="h-4 w-4"
-                  checked={userType === 'JOBSEEKER'}
-                  onChange={() => setUserType('JOBSEEKER')}
-                />
-                <span>JOB SEEKER</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="radio" 
-                  name="userType" 
-                  value="EMPLOYER" 
-                  className="h-4 w-4"
-                  checked={userType === 'EMPLOYER'}
-                  onChange={() => setUserType('EMPLOYER')}
-                />
-                <span>EMPLOYER</span>
-              </label>
             </div>
 
             {error && <p className="text-red-500 text-sm">{error}</p>}

@@ -5,18 +5,25 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { useTheme } from "next-themes"
 import { Moon, Sun } from "lucide-react"
-import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 export default function Header() {
-  // 移除未使用的 user 变量
-  const { } = useAuth() 
+  const { user, logout } = useAuth()
   const { theme, setTheme } = useTheme()
-  const { data: session } = useSession()
+  const router = useRouter()
 
-  // 主题切换函数
   // Theme toggle function
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push("/")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    }
   }
 
   return (
@@ -33,15 +40,15 @@ export default function Header() {
             <Link href="/companies" className="text-sm font-medium">
               Companies
             </Link>
-            {session?.user?.role === "ADMIN" && (
-              <Link href="/dashboard" className="text-sm font-medium">
+            {user?.role === "ADMIN" && (
+              <Link href="/admin" className="text-sm font-medium">
                 Dashboard
               </Link>
             )}
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {/* Theme toggle button | 主题切换按钮 */}
+          {/* Theme toggle button */}
           <Button
             variant="ghost"
             size="icon"
@@ -51,19 +58,24 @@ export default function Header() {
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             <span className="sr-only">Toggle theme</span>
           </Button>
-          {!session ? (
+          {!user ? (
             <>
-              <Link href="/login">
+              <Link href="/auth/login">
                 <Button variant="ghost">Login</Button>
               </Link>
-              <Link href="/register">
+              <Link href="/auth/register">
                 <Button>Sign up</Button>
               </Link>
             </>
           ) : (
-            <Link href="/profile">
-              <Button variant="ghost">Profile</Button>
-            </Link>
+            <>
+              <Link href="/profile">
+                <Button variant="ghost">Profile</Button>
+              </Link>
+              <Button variant="ghost" onClick={handleLogout}>
+                Log out
+              </Button>
+            </>
           )}
         </div>
       </div>
