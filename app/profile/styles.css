@@ -1,0 +1,91 @@
+.profile-container {
+  @apply container mx-auto px-4 py-8;
+}
+
+.profile-card {
+  @apply max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden;
+}
+
+.profile-header {
+  @apply p-6 border-b border-gray-200 bg-gray-50;
+}
+
+.profile-title {
+  @apply text-2xl font-bold text-gray-900;
+}
+
+.profile-content {
+  @apply p-6;
+}
+
+.profile-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.profile-field {
+  @apply mb-6;
+}
+
+.profile-label {
+  @apply text-gray-500 text-sm font-medium mb-1;
+}
+
+.profile-value {
+  @apply font-medium text-gray-900;
+}
+
+.profile-actions {
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4;
+}
+
+.profile-button {
+  @apply inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors;
+}
+
+.profile-button-primary {
+  @apply bg-primary text-white hover:bg-primary/90;
+}
+
+.profile-button-secondary {
+  @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50;
+}
+
+.profile-section {
+  @apply mb-8;
+}
+
+.profile-section-title {
+  @apply text-xl font-bold text-gray-900 mb-4;
+}
+
+.profile-section-content {
+  @apply bg-white rounded-lg shadow p-6;
+}
+
+.profile-resume {
+  @apply flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-md;
+}
+
+.profile-resume-name {
+  @apply text-sm font-medium text-gray-900;
+}
+
+.profile-resume-button {
+  @apply text-sm text-primary hover:text-primary/80;
+}
+
+.profile-loading {
+  @apply min-h-screen flex items-center justify-center;
+}
+
+.profile-loading-spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-b-2 border-primary;
+}
+
+.profile-error {
+  @apply text-red-500 text-sm mt-2;
+}
+
+.profile-success {
+  @apply text-green-500 text-sm mt-2;
+} 

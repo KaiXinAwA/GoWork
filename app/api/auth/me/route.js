@@ -17,7 +17,7 @@ export async function GET() {
       token = authHeader.substring(7);
     } else {
       // If no Bearer token, try to get from cookie
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       const sessionCookie = cookieStore.get('session');
       token = sessionCookie?.value;
     }

@@ -91,7 +91,8 @@ export function RegisterForm() {
       if (!response.ok) {
         // Handle server-side errors
         const errorMessage = data.message || data.error || "Registration failed";
-        throw new Error(errorMessage);
+        toast.error(errorMessage);
+        return;
       }
 
       // Registration successful

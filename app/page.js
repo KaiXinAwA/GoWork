@@ -9,11 +9,11 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        <section className="flex min-h-[70vh] flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20 px-4 py-16">
-          <div className="text-center space-y-6 max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
+        <section className="flex min-h-[70vh] flex-col items-center justify-center bg-gradient-to-b from-background to-muted/20 px-4 py-96">
+          <div className="text-center space-y-8 max-w-3xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mt-16">
               Welcome to <span className="text-primary">GoWork</span>
-              <span className="chinese block mt-2">欢迎来到 GoWork</span>
+              <span className="chinese block mt-4">欢迎来到 GoWork</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               A Simple Job Platform Connecting Job Seekers and Employers

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { Job, User, Category, Skill } from "@prisma/client";
+import { Job } from "@prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 // Define job type with relationships
 interface JobWithRelations extends Job {
-  employer: Pick<User, "name" | "id">;
-  category: Pick<Category, "name" | "id">;
-  skills: Pick<Skill, "name" | "id">[];
+  company: {
+    company_name: string;
+    companyid: number;
+  };
+  applications: any[];
 }
 
 export default function JobList() {
@@ -88,39 +90,26 @@ export default function JobList() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {jobs.map((job) => (
-        <Card key={job.id} className="flex flex-col">
+        <Card key={job.jobid} className="flex flex-col">
           <CardHeader>
-            <CardTitle className="line-clamp-2">{job.title}</CardTitle>
+            <CardTitle className="line-clamp-2">{job.position}</CardTitle>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary">{job.type}</Badge>
-              {job.experienceLevel && (
-                <Badge variant="outline">{job.experienceLevel}</Badge>
-              )}
+              <Badge variant="secondary">{job.typesofwork}</Badge>
             </div>
           </CardHeader>
           <CardContent className="flex-1">
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                {job.companyName} • {job.location}
+                {job.company.company_name}
               </p>
-              {job.salary && (
-                <p className="text-sm font-medium">{job.salary}</p>
+              {job.salaryrange && (
+                <p className="text-sm font-medium">{job.salaryrange}</p>
               )}
-              <div className="flex flex-wrap gap-1 mt-2">
-                {job.skills && job.skills.length > 0 && job.skills.map((skill) => (
-                  <Badge key={skill.id} variant="secondary" className="text-xs">
-                    {skill.name}
-                  </Badge>
-                ))}
-              </div>
               <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                {job.description}
+                {job.requirements}
               </p>
               <div className="flex justify-between items-center mt-4">
-                {job.category && (
-                  <Badge>{job.category.name}</Badge>
-                )}
-                <Link href={`/jobs/${job.id}`}>
+                <Link href={`/jobs/${job.jobid}`}>
                   <Button variant="outline">View Details</Button>
                 </Link>
               </div>

@@ -1,6 +1,9 @@
 import { Metadata } from "next";
 import { JobSearch } from "@/components/jobs/job-search";
 import JobList from "@/components/jobs/job-list";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Home } from "lucide-react";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
@@ -10,19 +13,22 @@ export const metadata: Metadata = {
 
 export default function JobsPage() {
   return (
-    <div className="container py-8 space-y-8">
-      <div className="space-y-2">
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Browse Jobs</h1>
-        <p className="text-muted-foreground">
-          Search and apply for jobs that best suit you
-        </p>
+        <Link href="/">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
+        </Link>
       </div>
-      
       <JobSearch />
-      
-      <Suspense fallback={<div>Loading job listings...</div>}>
-        <JobList />
-      </Suspense>
+      <div className="mt-8">
+        <Suspense fallback={<div>Loading job listings...</div>}>
+          <JobList />
+        </Suspense>
+      </div>
     </div>
   );
 }

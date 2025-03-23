@@ -13,6 +13,10 @@ export const viewport = {
   initialScale: 1,
   minimumScale: 1,
   userScalable: true,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
+  ],
 }
 
 export const metadata = {
@@ -28,10 +32,6 @@ export const metadata = {
       url: '/apple-touch-icon-precomposed.png',
     },
   },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#1a1a1a' },
-  ],
 }
 
 export default async function RootLayout({ children }) {

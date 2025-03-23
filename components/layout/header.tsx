@@ -71,13 +71,7 @@ export default function Header() {
             <>
               <Button 
                 variant="ghost" 
-                onClick={() => {
-                  if (user) {
-                    router.push('/profile');
-                  } else {
-                    router.push('/auth/login');
-                  }
-                }}
+                onClick={() => router.push('/profile')}
               >
                 Profile
               </Button>

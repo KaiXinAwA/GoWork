@@ -8,6 +8,7 @@ import Footer from "@/components/layout/footer"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import "./styles.css"
 
 interface UserProfile {
   userid: number;
@@ -38,36 +39,13 @@ export default function ProfilePage() {
     loadUserData();
   }, [refreshUser]);
 
-  // Show loading state while fetching user data
-  if (loading) {
+  // Show loading state while checking authentication
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow bg-gray-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // If no user data after loading, show a message
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow bg-gray-50">
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
-              <h1 className="text-xl font-bold mb-4">Profile</h1>
-              <p className="text-gray-600">Please log in to view your profile.</p>
-              <div className="mt-4">
-                <Link href="/auth/login">
-                  <Button variant="default">Go to Login</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
+        <main className="profile-loading">
+          <div className="profile-loading-spinner"></div>
         </main>
         <Footer />
       </div>
@@ -79,19 +57,19 @@ export default function ProfilePage() {
       <Header />
 
       <main className="flex-grow bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow">
-            <div className="p-6 border-b">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h1 className="text-xl font-bold">User Profile</h1>
+        <div className="profile-container">
+          <div className="profile-card">
+            <div className="profile-header">
+              <div className="profile-actions">
+                <h1 className="profile-title">User Profile</h1>
                 <div className="flex gap-2">
                   <Link href="/profile/update">
-                    <Button variant="default">
+                    <Button className="profile-button profile-button-primary">
                       Update Profile
                     </Button>
                   </Link>
                   <Link href="/profile/password">
-                    <Button variant="outline">
+                    <Button className="profile-button profile-button-secondary">
                       Change Password
                     </Button>
                   </Link>
@@ -99,73 +77,71 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="profile-content">
+              <div className="profile-grid">
                 <div>
-                  <div className="mb-6">
-                    <p className="text-gray-500 text-sm">USERNAME</p>
-                    <p className="font-medium">{user.username || 'Not set'}</p>
+                  <div className="profile-field">
+                    <p className="profile-label">USERNAME</p>
+                    <p className="profile-value">{user?.username || 'Not set'}</p>
                   </div>
-                  <div className="mb-6">
-                    <p className="text-gray-500 text-sm">EMAIL</p>
-                    <p className="font-medium">{user.email || 'Not set'}</p>
+                  <div className="profile-field">
+                    <p className="profile-label">EMAIL</p>
+                    <p className="profile-value">{user?.email || 'Not set'}</p>
                   </div>
                 </div>
 
                 <div>
-                  <div className="mb-6">
-                    <p className="text-gray-500 text-sm">USER ID</p>
-                    <p className="font-medium">{user.userid || 'Not set'}</p>
+                  <div className="profile-field">
+                    <p className="profile-label">USER ID</p>
+                    <p className="profile-value">{user?.userid || 'Not set'}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mb-6">
-                <p className="text-gray-500 text-sm">RESUME</p>
-                <div className="flex items-center mt-1">
-                  {user.resume ? (
-                    <div className="flex items-center gap-2">
-                      <div className="bg-gray-100 px-3 py-1 rounded text-sm">{user.resume}</div>
-                      <Link href={`/api/profile/resume/${user.resume}`} target="_blank">
-                        <Button variant="outline" size="sm">View</Button>
+              <div className="profile-field">
+                <p className="profile-label">RESUME</p>
+                <div className="profile-resume">
+                  {user?.resume ? (
+                    <>
+                      <span className="profile-resume-name">{user.resume}</span>
+                      <Link href={`/api/profile/resume/${user.resume}`} target="_blank" className="profile-resume-button">
+                        View
                       </Link>
-                    </div>
+                    </>
                   ) : (
-                    <p className="text-gray-500">No resume uploaded</p>
+                    <span className="text-gray-500">No resume uploaded</span>
                   )}
                 </div>
               </div>
 
-              <div className="mb-6">
-                <p className="text-gray-500 text-sm">EDUCATION</p>
-                <p className="font-medium">{user.education || 'No education information added yet'}</p>
+              <div className="profile-field">
+                <p className="profile-label">EDUCATION</p>
+                <p className="profile-value">{user?.education || 'No education information added yet'}</p>
               </div>
 
-              <div className="mb-6">
-                <p className="text-gray-500 text-sm">LANGUAGE</p>
-                <p className="font-medium">{user.language || 'No language information added yet'}</p>
+              <div className="profile-field">
+                <p className="profile-label">LANGUAGE</p>
+                <p className="profile-value">{user?.language || 'No language information added yet'}</p>
               </div>
             </div>
           </div>
 
           {/* Password Section */}
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow mt-8">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold">Password Management</h2>
-            </div>
-            <div className="p-6">
-              <div className="flex flex-col gap-4">
-                <p className="text-gray-600">
+          <div className="profile-section">
+            <div className="profile-section-content">
+              <h2 className="profile-section-title">Password Management</h2>
+              <div className="profile-content">
+                <p className="text-gray-600 mb-4">
                   Want to change your password? Click the button below to update it.
                 </p>
                 <div className="flex gap-4">
                   <Link href="/profile/password">
-                    <Button variant="default">
+                    <Button className="profile-button profile-button-primary">
                       Change Password
                     </Button>
                   </Link>
                   <Link href="/auth/forgot-password">
-                    <Button variant="outline">
+                    <Button className="profile-button profile-button-secondary">
                       Forgot Password?
                     </Button>
                   </Link>
